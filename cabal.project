@@ -1,0 +1,21 @@
+packages:
+  polyresolver-types
+  polyresolver-core
+  polyresolver-dns
+  polyresolver-api
+  polyresolver-metrics
+  polyresolver-config
+  polyresolver-plugin-sdk
+  polyresolver-adapter-unbound
+  polyresolver-adapter-ncdns
+  polyresolver-adapter-emerdns
+  polyresolver-adapter-hsd
+  polyresolver-adapter-ens
+  polyresolver-adapter-tor
+  polyresolver-adapter-i2p
+  polyresolver-adapter-mesh
+  polyresolver-adapter-decentweb
+  polyresolver-adapter-darknet
+  polyresolver-adapter-filter
+  polyresolver-ctl
+  polyresolver-server

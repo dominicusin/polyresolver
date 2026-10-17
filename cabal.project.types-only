@@ -1,0 +1,7 @@
+packages: polyresolver-types
+
+optimization: True
+
+tests: True
+
+write-ghc-environment-files: never

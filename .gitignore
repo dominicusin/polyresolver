@@ -1,0 +1,14 @@
+dist-newstyle/
+*.hi
+*.o
+*.cache
+*.log
+.cabal-sandbox/
+dist/
+*.stack-work/
+/.ghc-environment/
+/.hlint.yaml
+**/*.swp
+**/*.swo
+*~
+.DS_Store

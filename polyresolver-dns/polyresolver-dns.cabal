@@ -1,0 +1,28 @@
+cabal-version: 2.4
+name: polyresolver-dns
+version: 0.1.0.0
+synopsis: DNS wire protocol on top of dnsext
+description: See the project README and the technical specification.
+license: MPL-2.0
+license-file: LICENSE
+maintainer: polyresolver@nousresearch.com
+category: Network
+build-type: Simple
+
+library
+  exposed-modules: Polyresolver.DNS
+  hs-source-dirs: src
+  default-language: Haskell2010
+  build-depends:
+      base >= 4.15 && < 5
+    , polyresolver-types, polyresolver-core, dns, network, bytestring, text, binary, iproute, async, exceptions, warp
+  ghc-options: -Wall -Wcompat
+
+executable dns
+  main-is: Main.hs
+  hs-source-dirs: app
+  default-language: Haskell2010
+  build-depends:
+      base >= 4.15 && < 5
+    , polyresolver-dns
+  ghc-options: -Wall -threaded

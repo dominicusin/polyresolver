@@ -1,0 +1,66 @@
+cabal-version: 2.4
+name: polyresolver-types
+version: 0.1.0.0
+synopsis: Common types for the polyresolver name resolver
+description:
+  Core vocabulary shared by every polyresolver package: resolution requests
+  and typed results, namespace patterns, the nine-category naming-model
+  taxonomy, the ResolutionGraph delegation chain with cycle detection, cache
+  keys, and the Resolver typeclass that is the system's single extension point.
+license: MPL-2.0
+license-file: LICENSE
+maintainer: polyresolver@nousresearch.com
+category: Network
+build-type: Simple
+extra-source-files:
+  CHANGELOG.md
+  README.md
+
+library
+  exposed-modules:
+    Polyresolver.Types
+    Polyresolver.Types.Adapters
+    Polyresolver.Types.ClientContext
+    Polyresolver.Types.Cache
+    Polyresolver.Types.Errors
+    Polyresolver.Types.Graph
+    Polyresolver.Types.Health
+    Polyresolver.Types.Namespace
+    Polyresolver.Types.Request
+    Polyresolver.Types.Resolver
+    Polyresolver.Types.Result
+    Polyresolver.Types.QType
+    Polyresolver.Types.Zone
+  hs-source-dirs: src
+  default-language: Haskell2010
+  build-depends:
+      base         >= 4.15   && < 5
+    , aeson        >= 2.0    && < 2.3
+    , bytestring   >= 0.11   && < 0.13
+    , containers   >= 0.6    && < 0.8
+    , hashable     >= 1.4    && < 1.5
+    , stm          >= 2.5    && < 2.6
+    , text         >= 2.0    && < 2.2
+    , time         >= 1.11   && < 1.14
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Wmissing-export-lists
+    -Worphans
+    -Wredundant-constraints
+
+test-suite polyresolver-types-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs: test
+  default-language: Haskell2010
+  build-depends:
+      base
+    , polyresolver-types
+    , aeson
+    , hspec          >= 2.10   && < 2.12
+    , hspec-hedgehog >= 0.1    && < 0.2
+    , hedgehog       >= 1.2    && < 1.5
+    , QuickCheck     >= 2.14   && < 2.15
+    , text           >= 2.0    && < 2.2
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N

@@ -1,0 +1,17 @@
+name:                polyresolver-adapter-i2p
+version:             0.1.0.0
+synopsis:            i2p adapter for polyresolver
+description:         i2p adapter implementation
+homepage:            https://github.com/polyresolver/polyresolver
+license:             MIT
+author:              polyresolver team
+maintainer:          team@polyresolver.dev
+category:            Network
+cabal-version:       >= 1.8
+build-type:          Simple
+
+library
+  exposed-modules:     Polyresolver.Adapter.I2P
+  build-depends:       base, polyresolver-types, polyresolver-core, network >= 3.1 && < 3.3, bytestring, text, containers, mtl
+  hs-source-dirs:      src
+  default-language:    Haskell2010

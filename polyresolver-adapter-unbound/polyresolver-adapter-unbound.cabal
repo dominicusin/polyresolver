@@ -1,0 +1,17 @@
+name:                polyresolver-adapter-unbound
+version:             0.1.0.0
+synopsis:            unbound adapter for polyresolver
+description:         unbound adapter implementation
+homepage:            https://github.com/polyresolver/polyresolver
+license:             MIT
+author:              polyresolver team
+maintainer:          team@polyresolver.dev
+category:            Network
+cabal-version:       >= 1.2
+build-type:          Simple
+
+library
+  exposed-modules:     Polyresolver.Adapter.Unbound
+  build-depends:       base, polyresolver-types, polyresolver-core, dns, network >= 3.1 && < 3.3, bytestring, text, containers, mtl, binary, iproute, async, exceptions
+  hs-source-dirs:      src
+  default-language:    Haskell2010

@@ -1,0 +1,28 @@
+cabal-version: 2.4
+name: polyresolver-ctl
+version: 0.1.0.0
+synopsis: polyresolverctl command line tool
+description: See the project README and the technical specification.
+license: MPL-2.0
+license-file: LICENSE
+maintainer: polyresolver@nousresearch.com
+category: Network
+build-type: Simple
+
+library
+  exposed-modules: PolyresolverCtl.Lib
+  hs-source-dirs: src
+  default-language: Haskell2010
+  build-depends:
+      base >= 4.15 && < 5
+    , polyresolver-types, polyresolver-api, optparse-applicative, text
+  ghc-options: -Wall -Wcompat
+
+executable ctl
+  main-is: Main.hs
+  hs-source-dirs: app
+  default-language: Haskell2010
+  build-depends:
+      base >= 4.15 && < 5
+    , polyresolver-ctl
+  ghc-options: -Wall -threaded
