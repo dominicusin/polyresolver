@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables, LambdaCase, DerivingStrategies, RecordWildCards, NumericUnderscores, BinaryLiterals, TypeApplications, AllowAmbiguousTypes, GADTs, FlexibleInstances, TypeSynonymInstances, StandaloneDeriving #-}
+
 module Polyresolver.DNS.Server
   ( runDNSServer
   , handleDNSQuery
@@ -6,7 +7,7 @@ module Polyresolver.DNS.Server
   ) where
 
 import Control.Concurrent (forkIO, threadDelay)
-import Control.Exception (bracket, SomeException, catch)
+import Control.Exception (bracket, SomeException, catch, try)
 import Control.Monad (forever, void)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
@@ -15,7 +16,8 @@ import qualified Network.Socket as NS
 import qualified Network.Socket.ByteString as NSB
 
 import Polyresolver.Core.Engine (Engine)
-import Polyresolver.DNS.Resolver (handleDNSQuery, encodeDNSMessage, decodeDNSMessage, DNSMessage, DNSConfig(..))
+import Polyresolver.DNS.Resolver (handleDNSQuery, encodeDNSMessage, decodeDNSMessage, DNSMessage, DNSConfig (..))
+import Polyresolver.DNS.Proxy (delegatedZones, proxyDNSQuery, extractQueryName)
 
 runDNSServer :: Engine -> DNSConfig -> IO ()
 runDNSServer engine cfg = do
@@ -29,10 +31,10 @@ runUDPServer engine cfg = do
   sock <- NS.socket NS.AF_INET NS.Datagram NS.defaultProtocol
   NS.setSocketOption sock NS.ReuseAddr 1
   NS.bind sock addr
-  bracket (return sock) NS.close $ \s -> do
+  bracket (return sock) NS.close $ \_ -> do
     let loop = do
-          (msg, peer) <- NSB.recvFrom s 4096
-          void $ forkIO $ handleUDPSession engine s msg peer
+          (msg, peer) <- NSB.recvFrom sock 4096
+          void $ forkIO $ handleUDPSession engine sock msg peer
           loop
     loop
 
@@ -42,9 +44,9 @@ runTCPServer engine cfg = do
   sock <- NS.socket NS.AF_INET NS.Stream NS.defaultProtocol
   NS.bind sock addr
   NS.listen sock 1024
-  bracket (return sock) NS.close $ \s -> do
+  bracket (return sock) NS.close $ \_ -> do
     let loop = do
-          (conn, peer) <- NS.accept sock
+          (conn, _) <- NS.accept sock
           void $ forkIO $ handleTCPSession engine conn
           loop
     loop
@@ -55,7 +57,26 @@ handleUDPSession engine sock msg peer = do
   void $ (NSB.sendTo sock result peer `catch` (\(_e :: SomeException) -> return 0) :: IO Int)
 
 processDNSMessage :: Engine -> ByteString -> IO ByteString
-processDNSMessage engine bs = do
+processDNSMessage engine bs =
+  -- Check if this query should be proxied to a delegated backend
+  case proxyDNSQuery delegatedZones bs of
+    Just (_host, port) -> do
+      -- Proxy to delegated backend (e.g., Unbound)
+      let backendAddr = NS.SockAddrInet (fromIntegral port) (NS.tupleToHostAddress (127, 0, 0, 1))
+      result <- try $ do
+        sock <- NS.socket NS.AF_INET NS.Datagram 0
+        NS.connect sock backendAddr
+        NSB.sendAll sock bs
+        response <- NSB.recv sock 4096
+        NS.close sock
+        pure response
+      case result of
+        Left (_e :: SomeException) -> return bs
+        Right response -> return response
+    Nothing -> fallbackToEngine engine bs
+
+fallbackToEngine :: Engine -> ByteString -> IO ByteString
+fallbackToEngine engine bs = do
   case decodeDNSMessage bs of
     Left _err -> return bs  -- Return query as-is on decode error
     Right dnsMsg -> do
