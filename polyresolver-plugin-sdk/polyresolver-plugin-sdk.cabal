@@ -11,7 +11,11 @@ cabal-version:       >= 1.2
 build-type:          Simple
 
 library
-  exposed-modules:     Polyresolver.Plugin
-  build-depends:       base, polyresolver-types, polyresolver-core, text, containers, mtl
+  exposed-modules:     Polyresolver.PluginSDK
+                     , Polyresolver.PluginSDK.ABI
+                     , Polyresolver.PluginSDK.Client
+                     , Polyresolver.PluginSDK.IPC
+                     , Polyresolver.PluginSDK.Server
+  build-depends:       base, polyresolver-types, polyresolver-core, text, containers, mtl, binary, bytestring, network, stm, directory
   hs-source-dirs:      src
   default-language:    Haskell2010

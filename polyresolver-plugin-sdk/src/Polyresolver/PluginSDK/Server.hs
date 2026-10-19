@@ -5,10 +5,11 @@ module Polyresolver.PluginSDK.Server
   , startPluginServer
   , stopPluginServer
   , acceptPlugin
+  , ResolveError(..)
   ) where
 
 import Control.Concurrent (forkIO)
-import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar)
+import Control.Concurrent.STM (TVar, atomically, newTVarIO, readTVar, writeTVar)
 import Control.Exception (bracket, try, SomeException)
 import Control.Monad (forever, when)
 import Data.Text (Text)
@@ -16,6 +17,7 @@ import Network.Socket (Socket)
 import qualified Network.Socket as NS
 import System.Directory (removeFile)
 
+import Polyresolver.Types.Errors (ResolveError (..))
 import Polyresolver.PluginSDK.ABI
 import Polyresolver.PluginSDK.IPC
 
@@ -62,7 +64,7 @@ handleClient sock info = do
     Right IPCPing -> sendIPCMessage sock IPCPong
     Right (IPCRequest req) -> do
       -- Plugin-specific resolution logic goes here
-      sendIPCMessage sock (IPCResponse (PluginResponse (Left (PluginResolveError "not implemented"))))
+      sendIPCMessage sock (IPCResponse (PluginResponse (Left (InvalidRequest "not implemented"))))
     _ -> sendIPCMessage sock (IPCPluginError (PluginInitError "bad request"))
 
 acceptPlugin :: PluginServer -> IO (Either String Socket)

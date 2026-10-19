@@ -10,7 +10,7 @@ module Polyresolver.PluginSDK.Client
   ) where
 
 import Control.Exception (bracket, try, SomeException)
-import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar)
+import Control.Concurrent.STM (TVar, atomically, newTVarIO, readTVar, writeTVar)
 import Data.Text (Text)
 import Network.Socket (Socket)
 import qualified Network.Socket as NS
@@ -29,17 +29,27 @@ connectPlugin sockPath = do
   result <- try $ do
     sock <- NS.socket NS.AF_UNIX NS.Stream 0
     NS.connect sock (NS.SockAddrUnix sockPath)
-    sendIPCMessage sock IPCPluginInfo
+    sendIPCMessage sock (IPCPluginInfo PluginInfo
+      { piName = "polyresolver-plugin"
+      , piVersion = "0.1.0.0"
+      , piABIVersion = 1
+      , piCapabilities = PluginCapabilities
+        { pcStreamingResults = False
+        , pcAsyncCancel = False
+        , pcPartialResults = False
+        }
+      })
     response <- recvIPCMessage sock
     case response of
       Right (IPCPluginInfo info) -> do
         running <- newTVarIO True
-        pure (PluginClient sock info running)
+        pure (Right (PluginClient sock info running))
       Right (IPCPluginError err) -> pure (Left (show err))
       _ -> pure (Left "unexpected response")
   case result of
     Left err -> pure (Left (show (err :: SomeException)))
-    Right res -> pure res
+    Right (Left errMsg) -> pure (Left errMsg)
+    Right (Right client) -> pure (Right client)
 
 disconnectPlugin :: PluginClient -> IO ()
 disconnectPlugin client = do
@@ -69,4 +79,5 @@ pingPlugin client = do
     Right (Right IPCPong) -> pure (Right ())
     Right (Right _) -> pure (Left "unexpected response")
 
-import Control.Concurrent.STM (newTVarIO)
+recvResponse :: Socket -> IO (Either String IPCMessage)
+recvResponse sock = recvIPCMessage sock

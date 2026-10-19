@@ -1,4 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Polyresolver.PluginSDK.ABI
   ( PluginRequest(..)
@@ -8,6 +10,7 @@ module Polyresolver.PluginSDK.ABI
   , PluginError(..)
   , currentABIVersion
   , negotiateCapabilities
+  , ResolveError(..)
   ) where
 
 import Data.Binary (Binary)
@@ -21,35 +24,30 @@ import Polyresolver.Types.Errors (ResolveError)
 
 data PluginRequest = PluginRequest
   { prRequest :: !ResolveRequest
-  } deriving stock (Eq, Show, Generic)
-    deriving anyclass (Binary)
+  } deriving (Eq, Show, Generic)
 
 data PluginResponse = PluginResponse
   { prResult :: !(Either ResolveError ResolveResult)
-  } deriving stock (Eq, Show, Generic)
-    deriving anyclass (Binary)
+  } deriving (Eq, Show, Generic)
 
 data PluginCapabilities = PluginCapabilities
   { pcStreamingResults :: !Bool
   , pcAsyncCancel      :: !Bool
   , pcPartialResults   :: !Bool
-  } deriving stock (Eq, Show, Generic)
-    deriving anyclass (Binary)
+  } deriving (Eq, Show, Generic)
 
 data PluginInfo = PluginInfo
   { piName         :: !Text
   , piVersion      :: !Text
   , piABIVersion   :: !Word32
   , piCapabilities :: !PluginCapabilities
-  } deriving stock (Eq, Show, Generic)
-    deriving anyclass (Binary)
+  } deriving (Eq, Show, Generic)
 
 data PluginError
   = PluginInitError Text
   | PluginResolveError Text
   | PluginShutdownError Text
-  deriving stock (Eq, Show, Generic)
-    deriving anyclass (Binary)
+  deriving (Eq, Show, Generic)
 
 currentABIVersion :: Word32
 currentABIVersion = 1

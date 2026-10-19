@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DerivingStrategies #-}
 
 module Polyresolver.CTL
   ( CTLCommand(..)
@@ -36,7 +36,7 @@ data CTLCommand
   deriving stock (Eq, Show)
 
 data CTLConfig = CTLConfig
-  { ctlAddress :: !Text
+  { ctlAddress :: !String
   , ctlPort    :: !Int
   } deriving stock (Eq, Show)
 
