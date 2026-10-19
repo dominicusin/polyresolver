@@ -20,17 +20,14 @@ library
   exposed-modules:
     Polyresolver.Types
     Polyresolver.Types.Adapters
-    Polyresolver.Types.ClientContext
     Polyresolver.Types.Cache
     Polyresolver.Types.Errors
     Polyresolver.Types.Graph
-    Polyresolver.Types.Health
     Polyresolver.Types.Namespace
     Polyresolver.Types.Request
     Polyresolver.Types.Resolver
     Polyresolver.Types.Result
     Polyresolver.Types.QType
-    Polyresolver.Types.Zone
   hs-source-dirs: src
   default-language: Haskell2010
   build-depends:

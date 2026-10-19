@@ -27,7 +27,7 @@ import qualified Network.Socket.ByteString as NS
 import Polyresolver.Core.Engine (Engine, resolve)
 import Polyresolver.Types.Adapters (AdapterId(..))
 import Polyresolver.Types.Errors (ResolveError(..))
-import Polyresolver.Types.Health (HealthStatus(..))
+import Polyresolver.Types.Result (HealthStatus(..))
 import Polyresolver.Types.Request (ResolveRequest(..))
 import Polyresolver.Types.Result (ResolveResult(..), StructuredRecord(..), DelegateTarget(..))
 

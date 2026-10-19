@@ -23,7 +23,6 @@ import Polyresolver.Types.Adapters (AdapterId(..), NamingModel(..))
 import Polyresolver.Types.Errors (ResolveError(..))
 import Polyresolver.Types.Result (HealthStatus(..), ResolveResult(..))
 import Polyresolver.Types.Request (ResolveRequest(..))
-import Polyresolver.Types.Result (ResolveResult(..))
 import Polyresolver.Types.Namespace (ZonePattern(..))
 
 data MeshConfig = MeshConfig

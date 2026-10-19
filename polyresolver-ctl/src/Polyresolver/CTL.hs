@@ -17,7 +17,7 @@ import System.IO (hPutStrLn, stderr)
 
 import Polyresolver.Core.Engine (Engine, resolve, engineAdapters, engineStats)
 import Polyresolver.Types.Request (ResolveRequest(..), newResolveRequest)
-import Polyresolver.Types.ClientContext (ClientContext(..))
+import Polyresolver.Types.Request (ClientContext(..))
 import Polyresolver.Types.QType (QType(..))
 import Polyresolver.Types.Graph (ResolutionGraph(..))
 import Polyresolver.Types.Result (ResolveResult(..))

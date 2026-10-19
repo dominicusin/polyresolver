@@ -26,22 +26,12 @@ import Polyresolver.Types.QType (QType(..))
 import Polyresolver.Types.Graph (ResolutionGraph(..))
 import Polyresolver.Types.Result (ResolveResult(..))
 import Polyresolver.Types.Errors (ResolveError(..))
-import Polyresolver.Types.Health (HealthStatus(..))
+import Polyresolver.Types.Result (HealthStatus(..))
 import Data.Time (getCurrentTime)
 import Data.Aeson (ToJSON(..), FromJSON(..), Value(..), object, (.=), withText)
 import GHC.Generics (Generic)
 
-instance ToJSON HealthStatus where
-  toJSON Healthy = String "healthy"
-  toJSON (Degraded reason) = object ["status" .= String "degraded", "reason" .= reason]
-  toJSON (Unhealthy _) = String "unhealthy"
-
-instance FromJSON HealthStatus where
-  parseJSON = withText "HealthStatus" $ \t -> case t of
-    "healthy" -> pure Healthy
-    "degraded" -> pure (Degraded "unknown")
-    "unhealthy" -> pure (Unhealthy "unknown")
-    _ -> fail "Unknown HealthStatus"
+-- HealthStatus JSON instances are in Polyresolver.Types.Result
 
 data APIConfig = APIConfig
   { acAddress :: !Text

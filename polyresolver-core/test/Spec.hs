@@ -17,7 +17,7 @@ import Polyresolver.Types.Errors (ResolveError (..))
 import Polyresolver.Types.QType (QType (..))
 import Polyresolver.Types.Graph (ResolutionGraph (..))
 import Polyresolver.Types.Namespace (ZonePattern (..))
-import Polyresolver.Types.Health (HealthStatus (..))
+import Polyresolver.Types.Result (HealthStatus (..))
 import Data.Time (getCurrentTime)
 
 main :: IO ()
