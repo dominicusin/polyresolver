@@ -1,16 +1,13 @@
 {-# LANGUAGE DerivingStrategies #-}
--- | DNS wire codec for the polyresolver DNS facade.
+
+-- | DNS wire codec for polyresolver.
 --
--- This module handles the encoding and decoding of DNS wire-format messages,
--- using only the @dns@ package as a dependency. The wire format follows RFC 1035
--- (and RFC 1034 for the presentation format).
---
--- At this stage, we implement the 12-byte header (RFC 1035, section 4.1.1)
--- and provide stubs for question/RR encoding, to be expanded when the
--- integration with dnsext is ready.
+-- At this stage: 12-byte header encode/decode (RFC 1035 section 4.1.1).
+-- Full message encode/decode will be added when the dnsext integration
+-- is complete.
 module Polyresolver.DNS.Codec
-  ( -- * Header
-    encodeHeader
+  ( DNSHeader(..)
+  , encodeHeader
   , decodeHeader
   ) where
 
@@ -29,8 +26,6 @@ data DNSHeader = DNSHeader
   } deriving stock (Eq, Show)
 
 -- | Encode a 12-byte DNS header (RFC 1035, section 4.1.1).
---
--- All fields are encoded in network byte order (big-endian).
 encodeHeader :: DNSHeader -> ByteString
 encodeHeader h = BS.concat
   [ be16 (dhId h)
@@ -45,8 +40,6 @@ encodeHeader h = BS.concat
     be16 w = BS.pack [fromIntegral (w `div` 0x100), fromIntegral (w `mod` 0x100)]
 
 -- | Decode a 12-byte DNS header.
---
--- Returns 'Left' if the input is shorter than 12 bytes.
 decodeHeader :: ByteString -> Either Text DNSHeader
 decodeHeader bs
   | BS.length bs < 12 = Left (pack "DNS message too short")
@@ -61,4 +54,3 @@ decodeHeader bs
   where
     be16To :: Word8 -> Word8 -> Word16
     be16To hi lo = fromIntegral hi * 0x100 + fromIntegral lo
-
