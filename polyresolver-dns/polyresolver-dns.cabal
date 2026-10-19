@@ -19,7 +19,7 @@ library
   default-language: Haskell2010
   build-depends:
       base >= 4.15 && < 5
-    , polyresolver-types, polyresolver-core, dns >= 3.0 && < 4, network >= 3.1 && < 3.3, bytestring, text, time >= 1.11 && < 1.14, binary, iproute, async, exceptions, warp
+    , polyresolver-types, polyresolver-core, dns >= 3.0 && < 4, network >= 3.1 && < 3.3, bytestring, text, time >= 1.11 && < 1.14, binary, iproute, async, exceptions, warp, containers
   ghc-options: -Wall -Wcompat
 
 executable dns

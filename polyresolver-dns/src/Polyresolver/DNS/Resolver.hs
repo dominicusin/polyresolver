@@ -1,40 +1,33 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables, LambdaCase, DerivingStrategies, RecordWildCards, NumericUnderscores, BinaryLiterals, TypeApplications, AllowAmbiguousTypes, GADTs, FlexibleInstances, TypeSynonymInstances, StandaloneDeriving #-}
+{-# LANGUAGE OverloadedStrings, ScopedTypeVariables, LambdaCase, DerivingStrategies, RecordWildCards #-}
 
 module Polyresolver.DNS.Resolver
-  ( ResolveRequest(..)
-  , ResolveResult(..)
-  , StructuredRecord(..)
-  , DelegateTarget(..)
-  , DNSConfig(..)
+  ( DNSConfig(..)
   , defaultDNSConfig
   , handleDNSQuery
-  , encodeDNSMessage
-  , decodeDNSMessage
-  , DNSMessage(..)
   ) where
 
+import Data.Bits ((.&.), (.|.))
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as BS
+import Data.Sequence (Seq)
+import qualified Data.Sequence as Seq
+import Data.List.NonEmpty (NonEmpty(..))
+import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Word (Word8, Word16, Word32)
-import Data.Int (Int64)
-import Data.Time (NominalDiffTime)
-import Network.Socket (SockAddr)
-import qualified Network.Socket as NS
-import qualified Network.Socket.ByteString as NSB
-import Control.Concurrent (forkIO)
-import Control.Monad (void)
-import Control.Exception (bracket, try, SomeException, catch)
+import Data.Time (getCurrentTime, UTCTime)
+import Data.Word (Word16)
 
 import Polyresolver.Core.Engine (Engine, resolve)
-import Polyresolver.Types.Adapters (AdapterId(..))
+import Polyresolver.DNS.Codec
+  ( DNSMessage(..), DNSHeader(..), DNSQuestion(..), DNSResourceRecord(..)
+  , encodeMessage
+  )
 import Polyresolver.Types.Errors (ResolveError(..))
-import Polyresolver.Types.Result (ResolveResult(..), StructuredRecord(..), DelegateTarget(..))
+import Polyresolver.Types.Result
+  ( ResolveResult(..), ClassicRecord(..)
+  )
 import Polyresolver.Types.Request (ResolveRequest(..), ClientContext(..))
+import Polyresolver.Types.Graph (ResolutionNode(..))
 import Polyresolver.Types.QType (QType(..))
-import Polyresolver.Types.Graph (ResolutionGraph(..))
-import Polyresolver.Types.Namespace (ZonePattern(..))
 
 data DNSConfig = DNSConfig
   { dcAddress :: !Text
@@ -47,51 +40,110 @@ defaultDNSConfig = DNSConfig
   , dcPort    = 5300
   }
 
+-- | Process a DNS query through the engine and return the response message.
 handleDNSQuery :: Engine -> DNSMessage -> IO DNSMessage
-handleDNSQuery engine msg = do
-  -- Decode query, route through engine, encode response
-  -- For now, return the message as-is (stub)
-  pure msg
+handleDNSQuery engine query = do
+  now <- getCurrentTime
+  let req = messageToRequest now query
+  result <- resolve engine req
+  pure (either (\_ -> buildResponse query NotFound) (buildResponse query) result)
 
-encodeDNSMessage :: DNSMessage -> ByteString
-encodeDNSMessage (DNSMessage{..}) = BS.pack
-  [ fromIntegral (dmId `div` 256), fromIntegral (dmId `mod` 256)
-  , fromIntegral (dmFlags `div` 256), fromIntegral (dmFlags `mod` 256)
-  , fromIntegral (dmQuestions `div` 256), fromIntegral (dmQuestions `mod` 256)
-  , fromIntegral (dmAnswer `div` 256), fromIntegral (dmAnswer `mod` 256)
-  , fromIntegral (dmAuthority `div` 256), fromIntegral (dmAuthority `mod` 256)
-  , fromIntegral (dmAdditional `div` 256), fromIntegral (dmAdditional `mod` 256)
-  ]
+-- | Convert a DNSMessage to a ResolveRequest.
+messageToRequest :: UTCTime -> DNSMessage -> ResolveRequest
+messageToRequest now msg =
+  let q = NE.head (msgQuestions msg)
+  in ResolveRequest
+       { reqName  = qName q
+       , reqType  = wordToQType (qType q)
+  , reqCtx   = ClientContext "127.0.0.1" "default" "dns-query"
+  , reqGraph = Seq.empty
+  , reqAt    = now
+  }
 
-decodeDNSMessage :: ByteString -> Either String DNSMessage
-decodeDNSMessage bs
-  | BS.length bs < 12 = Left "DNS message too short"
-  | otherwise = Right $ DNSMessage
-      { dmId        = fromIntegral (BS.index bs 0) * 256 + fromIntegral (BS.index bs 1)
-      , dmFlags     = fromIntegral (BS.index bs 2) * 256 + fromIntegral (BS.index bs 3)
-      , dmQuestions  = fromIntegral (BS.index bs 4) * 256 + fromIntegral (BS.index bs 5)
-      , dmAnswer    = fromIntegral (BS.index bs 6) * 256 + fromIntegral (BS.index bs 7)
-      , dmAuthority = fromIntegral (BS.index bs 8) * 256 + fromIntegral (BS.index bs 9)
-      , dmAdditional = fromIntegral (BS.index bs 10) * 256 + fromIntegral (BS.index bs 11)
-      }
+-- | Build a DNS response message from the query and resolution result.
+buildResponse :: DNSMessage -> ResolveResult -> DNSMessage
+buildResponse query result =
+  let hdr = msgHeader query
+      flags = setQrBit (dhFlags hdr)
+  in case result of
+    Classic rrSet ->
+      let answers = map classicRecordToWire (toListNE rrSet)
+      in DNSMessage
+           { msgHeader = hdr { dhAnCount = fromIntegral (length answers), dhFlags = flags }
+           , msgQuestions = msgQuestions query
+           , msgAnswers = answers
+           , msgAuthority = []
+           , msgAdditional = []
+           }
+    NotFound ->
+      let flags' = setRcode flags 3  -- NXDOMAIN
+      in DNSMessage
+           { msgHeader = hdr { dhAnCount = 0, dhFlags = flags' }
+           , msgQuestions = msgQuestions query
+           , msgAnswers = []
+           , msgAuthority = []
+           , msgAdditional = []
+           }
+    TemporarilyUnavailable _ ->
+      let flags' = setRcode flags 2  -- SERVFAIL
+      in DNSMessage
+           { msgHeader = hdr { dhAnCount = 0, dhFlags = flags' }
+           , msgQuestions = msgQuestions query
+           , msgAnswers = []
+           , msgAuthority = []
+           , msgAdditional = []
+           }
+    _ ->
+      -- Structured / Delegate: NOERROR, empty answer (handled via HTTP API)
+      DNSMessage
+        { msgHeader = hdr { dhAnCount = 0, dhFlags = flags }
+        , msgQuestions = msgQuestions query
+        , msgAnswers = []
+        , msgAuthority = []
+        , msgAdditional = []
+        }
 
-data DNSMessage = DNSMessage
-  { dmId        :: !Word16
-  , dmFlags     :: !Word16
-  , dmQuestions :: !Word16
-  , dmAnswer    :: !Word16
-  , dmAuthority :: !Word16
-  , dmAdditional :: !Word16
-  } deriving (Eq, Show)
+-- | Convert a ClassicRecord to wire format.
+classicRecordToWire :: ClassicRecord -> DNSResourceRecord
+classicRecordToWire cr = DNSResourceRecord
+  { rrName  = crName cr
+  , rrType  = textToTypeWord (crRType cr)
+  , rrClass = 1  -- IN
+  , rrTTL   = 300
+  , rrRData = crRData cr
+  }
 
-data DNSResourceRecord = DNSResourceRecord
-  { rrName     :: !DNSDomain
-  , rrType     :: !RQType
-  , rrClass    :: !Word16
-  , rrTtl      :: !Word32
-  , rrRdlength :: !Word16
-  , rrRdata    :: !ByteString
-  } deriving (Eq, Show)
+setQrBit :: Word16 -> Word16
+setQrBit flags = flags .|. 0x8000
 
-type DNSDomain = Text
-type RQType = Word16
+setRcode :: Word16 -> Int -> Word16
+setRcode flags rc = (flags .&. 0xFFF0) .|. fromIntegral rc
+
+textToTypeWord :: Text -> Word16
+textToTypeWord "A"     = 1
+textToTypeWord "AAAA"  = 28
+textToTypeWord "CNAME" = 5
+textToTypeWord "MX"    = 15
+textToTypeWord "TXT"   = 16
+textToTypeWord "NS"    = 2
+textToTypeWord "SOA"   = 6
+textToTypeWord "PTR"   = 12
+textToTypeWord "SRV"   = 33
+textToTypeWord "ANY"   = 255
+textToTypeWord _       = 0
+
+wordToQType :: Word16 -> QType
+wordToQType 1   = QTA
+wordToQType 28  = QTAAAA
+wordToQType 5   = QTCNAME
+wordToQType 15  = QTMX
+wordToQType 16  = QTTXT
+wordToQType 2   = QTRaw 2
+wordToQType 6   = QTRaw 6
+wordToQType 12  = QTRaw 12
+wordToQType 33  = QTSRV
+wordToQType 255 = QTRaw 255
+wordToQType n   = QTRaw (fromIntegral n)
+
+toListNE :: NonEmpty a -> [a]
+toListNE = NE.toList

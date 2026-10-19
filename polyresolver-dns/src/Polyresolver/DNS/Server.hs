@@ -16,8 +16,9 @@ import qualified Network.Socket as NS
 import qualified Network.Socket.ByteString as NSB
 
 import Polyresolver.Core.Engine (Engine)
-import Polyresolver.DNS.Resolver (handleDNSQuery, encodeDNSMessage, decodeDNSMessage, DNSMessage, DNSConfig (..))
-import Polyresolver.DNS.Proxy (delegatedZones, proxyDNSQuery, extractQueryName)
+import Polyresolver.DNS.Resolver (handleDNSQuery, DNSConfig (..))
+import Polyresolver.DNS.Codec (DNSMessage, encodeMessage, decodeMessage)
+import Polyresolver.DNS.Proxy (delegatedZones, proxyDNSQuery)
 
 runDNSServer :: Engine -> DNSConfig -> IO ()
 runDNSServer engine cfg = do
@@ -77,11 +78,11 @@ processDNSMessage engine bs =
 
 fallbackToEngine :: Engine -> ByteString -> IO ByteString
 fallbackToEngine engine bs = do
-  case decodeDNSMessage bs of
+  case decodeMessage bs of
     Left _err -> return bs  -- Return query as-is on decode error
     Right dnsMsg -> do
       response <- handleDNSQuery engine dnsMsg
-      return $ encodeDNSMessage response
+      return $ encodeMessage response
 
 handleTCPSession :: Engine -> Socket -> IO ()
 handleTCPSession engine conn = do
