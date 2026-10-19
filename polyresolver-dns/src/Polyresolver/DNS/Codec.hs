@@ -16,8 +16,10 @@ module Polyresolver.DNS.Codec
   , encodeRR
   , decodeRR
   , encodeName
+  , decodeName
   ) where
 
+import Control.Applicative ((<|>))
 import Control.Exception (Exception)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
@@ -109,12 +111,12 @@ encodeName name =
 -- | Follows compression pointers (RFC 1035 section 4.1.4).
 decodeName :: ByteString -> Int -> Either Text (Text, Int)
 decodeName bs startOff = do
-  (labels, finalOff) <- go startOff startOff []
+  (labels, finalOff) <- go startOff []
   pure (T.intercalate "." (map TE.decodeUtf8 (reverse labels)), finalOff)
   where
-    -- go: current offset, target offset (after compression pointer), accumulated labels
-    go :: Int -> Int -> [ByteString] -> Either Text ([ByteString], Int)
-    go curOff tgtOff labels
+    -- go: current offset, accumulated labels; returns (labels, offset-after-name)
+    go :: Int -> [ByteString] -> Either Text ([ByteString], Int)
+    go curOff labels
       | curOff >= BS.length bs = Left (pack "DNS name truncated")
       | otherwise = do
           len <- maybe (Left (pack "DNS name truncated")) Right (bs BS.!? curOff)
@@ -123,13 +125,15 @@ decodeName bs startOff = do
               case bs BS.!? (curOff + 1) of
                 Nothing -> Left (pack "DNS compression pointer truncated")
                 Just lo -> let ptr = fromIntegral (len .&. 0x3F) * 256 + fromIntegral lo
-                           in go ptr (curOff + 2) labels
+                           in case go ptr labels of
+                                Left err -> Left err
+                                Right r -> Right (fst r, curOff + 2)
             else if len == 0
-              then Right (labels, tgtOff)
+              then Right (labels, curOff + 1)
               else if curOff + 1 + fromIntegral len > BS.length bs
                 then Left (pack "DNS label truncated")
                 else let lbl = BS.take (fromIntegral len) (BS.drop (curOff + 1) bs)
-                     in go (curOff + 1 + fromIntegral len) tgtOff (lbl:labels)
+                     in go (curOff + 1 + fromIntegral len) (lbl:labels)
 
 -------------------------------------------------------------------------------
 -- Question
