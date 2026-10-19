@@ -1,0 +1,1492 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name=claude:viewport-fit-sides content=cover><style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-right:env(safe-area-inset-right,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}</style><style>.md-table{overflow-x:auto}@media print{.md-table{overflow-x:visible}}</style><style>:root{color-scheme:light dark;--md-bg:#fff;--md-text:rgba(0,0,0,.8);--md-muted:rgba(0,0,0,.6);--md-fill:rgba(0,0,0,.04);--md-fill-strong:rgba(0,0,0,.06);--md-rule:rgba(0,0,0,.1);--md-rule-strong:rgba(0,0,0,.16);--md-link:hsl(210 100% 45%)}@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){--md-bg:#0d0d0d;--md-text:rgba(255,255,255,.85);--md-muted:rgba(255,255,255,.6);--md-fill:rgba(255,255,255,.06);--md-fill-strong:rgba(255,255,255,.09);--md-rule:rgba(255,255,255,.14);--md-rule-strong:rgba(255,255,255,.22);--md-link:hsl(210 100% 72%)}}:root[data-theme="dark"]{color-scheme:dark;--md-bg:#0d0d0d;--md-text:rgba(255,255,255,.85);--md-muted:rgba(255,255,255,.6);--md-fill:rgba(255,255,255,.06);--md-fill-strong:rgba(255,255,255,.09);--md-rule:rgba(255,255,255,.14);--md-rule-strong:rgba(255,255,255,.22);--md-link:hsl(210 100% 72%)}:root[data-theme="light"]{color-scheme:light}@media print{:root,:root[data-theme="dark"]{color-scheme:light;--md-bg:#fff;--md-text:rgba(0,0,0,.8);--md-muted:rgba(0,0,0,.6);--md-fill:rgba(0,0,0,.04);--md-fill-strong:rgba(0,0,0,.06);--md-rule:rgba(0,0,0,.1);--md-rule-strong:rgba(0,0,0,.16);--md-link:hsl(210 100% 45%)}}body{background:var(--md-bg);color:var(--md-text);max-width:720px;margin:0 auto;padding:32px;display:flex;flex-direction:column;gap:10px;font:14px/1.55 -apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;overflow-wrap:break-word}body>:first-child{margin-top:0}h1,h2,h3,h4,h5,h6{margin:6px 0 0;line-height:1.25;font-weight:600;text-wrap:balance}h1{font-size:1.35em}h2{font-size:1.15em;color:var(--md-muted)}h3,h4,h5,h6{font-size:1em}p,ul,ol,blockquote,table,pre,hr{margin:0}strong{font-weight:600}a{color:var(--md-link);text-decoration:none}a:hover{text-decoration:underline}ul,ol{display:flex;flex-direction:column;gap:6px;padding-left:22px}ul{list-style:disc}ol{list-style:decimal}:is(li,td,th)>*+:is(p,ul,ol,blockquote){margin-top:6px}blockquote{display:flex;flex-direction:column;gap:10px;border-left:2px solid var(--md-rule);padding-left:10px;color:var(--md-muted)}:not(pre)>code{background:var(--md-fill);padding:1px 3px;border-radius:4px;font:.92em 'SF Mono',ui-monospace,Menlo,Consolas,monospace}a>code{background:none;color:inherit}pre{background:var(--md-fill);padding:10px 12px;border-radius:6px;overflow-x:auto;font:12px/1.5 'SF Mono',ui-monospace,Menlo,Consolas,monospace;margin-block:4px}pre code{background:none;padding:0;font:inherit}table{width:100%;border-collapse:separate;border-spacing:2px;font:inherit}th,td{padding:6px 8px;border-radius:3px;text-align:left;vertical-align:top}th{background:var(--md-fill-strong);font-weight:600}td{background:var(--md-fill)}:is(th,td) :not(pre)>code{background:transparent}hr{border:0;border-top:1px solid var(--md-rule-strong);margin-block:10px}img{max-width:100%;height:auto;border-radius:4px}</style>
+</head><body>
+<h1>Техническое задание</h1>
+<h2><code>polyresolver</code> — универсальный DNS-совместимый резолвер имён для альтернативных, блокчейн- и mesh-сетей (Haskell)</h2>
+<p><strong>Версия документа:</strong> 0.2
+<strong>Дата:</strong> 17 октября 2026 г.
+<strong>Статус:</strong> рабочее ТЗ уровня Vision + SRS + SAD (см. раздел 22 о рекомендованном разделении на самостоятельные документы)</p>
+<blockquote>
+<p>Примечание по источнику: ссылка <code>https://chatgpt.com/s/t_6a58471fb1488191a76b32b92dde1c03</code> была запрошена инструментом получения веб-страниц; страница отдаёт только клиентский JS-каркас без содержимого диалога — из метаданных подтверждён только заголовок обсуждения, «Настройка метарезолвера». <code>[Не проверено]</code> Содержательная часть недоступна для прямой сверки по ссылке; далее в диалоге пользователь передал фрагменты этого обсуждения текстом — они учтены ниже и там, где содержат самостоятельные фактические утверждения о внешних системах (а не архитектурные предложения), повторно проверены независимым поиском либо явно помечены как непроверенные.</p>
+</blockquote>
+<hr>
+<h2>0. Преамбула (Панчавайава)</h2>
+<ol>
+<li><strong>Тезис.</strong> <code>polyresolver</code> — система на Haskell, предоставляющая единый DNS-совместимый интерфейс к разнородным пространствам имён: классическому DNS, блокчейн-реестрам имён (Handshake, ENS, Namecoin/<code>ncdns</code>, EmerDNS), сетям анонимизации (Tor, I2P/i2pd), mesh- и overlay-сетям (Yggdrasil, cjdns, Reticulum, OLSR, Meshtastic, Babel, Serval), децентрализованным хранилищам с именующими надстройками (IPFS/IPNS, ZeroNet, Hyphanet, GNUnet/GNS), экспериментальным межсетевым даркнетам (dn42, anoNet) и репутационно-фильтрующим системам (DNSBL/DRBL).</li>
+<li><strong>Основание.</strong> Каждая из перечисленных систем решает задачу «имя → ресурс» собственным, несовместимым с остальными способом: консенсусный реестр, самоудостоверяющийся криптографический адрес, контентный хэш, petname-делегирование, флудинг по топологии mesh. Поддержка каждой системы отдельным клиентом порождает фрагментацию интеграционных усилий; <code>polyresolver</code> инкапсулирует эту фрагментацию на уровне типизированных адаптеров за единым протокольным фасадом.</li>
+<li><strong>Пример.</strong> Клиент отправляет <code>A example.hns</code> на <code>polyresolver</code>; по суффиксу <code>.hns</code> запрос маршрутизируется в Handshake-адаптер, результат нормализуется в <code>ResolveResult</code> и, если это классическая RR-запись, возвращается клиенту как обычный DNS-ответ; если результат — Ethereum-контракт с <code>contenthash</code>, он возвращается не как сфабрикованный A-record, а как типизированная структура через HTTP backend API.</li>
+<li><strong>Применение.</strong> Разделы 1–24 — детализация этого применения.</li>
+<li><strong>Заключение.</strong> <code>polyresolver</code> — исключительно уровень трансляции имён: не блокчейн-нода, не удостоверяющий центр, не VPN/прокси-клиент. Центральный архитектурный инвариант системы: <strong>одно пространство имён → один authoritative-бэкенд, без неявного fallback</strong> (детализация — раздел 4.1).</li>
+</ol>
+<h3>Методологическое примечание по эпистемической маркировке</h3>
+<p>Пометки <code>[Вывод]</code>, <code>[Предположение]</code>, <code>[Не проверено]</code> в документе относятся исключительно к <strong>фактическим утверждениям о существующих внешних системах</strong> (протоколы, порты, форматы, текущий статус проектов). Архитектурные решения, сигнатуры типов и схемы конфигурации — инженерное предложение авторов ТЗ, которое по своей природе не может быть «проверено» до реализации, и поэтому не маркируется этими тремя пометками; там, где решение является одним из нескольких равно обоснованных вариантов, это оговорено явно. Нормативная лексика RFC 2119 (<code>MUST</code>/<code>SHOULD</code>/<code>MAY</code>) используется параллельно с эпистемической маркировкой и решает другую задачу: не достоверность, а обязательность требования.</p>
+<hr>
+<h2>1. Общие сведения</h2>
+<h3>1.1. Наименование</h3>
+<p><code>polyresolver</code>. Пакетное пространство имён: <code>polyresolver-*</code> (Cabal), модули верхнего уровня <code>Polyresolver.*</code>.</p>
+<h3>1.2. Область применения</h3>
+<ul>
+<li>локальный резолвер на рабочей станции разработчика;</li>
+<li>шлюзовой резолвер инфраструктуры (замена связки «Unbound + набор самописных плагинов» единой системой с общим кэшем, политикой и наблюдаемостью);</li>
+<li>встраиваемый компонент через HTTP backend API для сторонних сервисов, которым нужен программный доступ к альтернативным пространствам имён (например, собственным проектам автора — <code>[Вывод]</code>, перенос архитектурных соглашений <code>Surypus</code>: монорепозиторий из нескольких Cabal-пакетов, STM как внутренняя шина состояния, Servant для API — предложение по аналогии, а не зафиксированное требование).</li>
+</ul>
+<h3>1.3. Термины, определения, сокращения</h3>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Термин</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Адаптер (Resolver instance)</td>
+<td>Модуль, инкапсулирующий протокол конкретной системы именования и реализующий типовой интерфейс <code>Resolver</code></td>
+</tr>
+<tr>
+<td>Зона / namespace</td>
+<td>Суффикс или предикат маршрутизации, за который отвечает ровно один authoritative-адаптер (ТРЕБ-001)</td>
+</tr>
+<tr>
+<td>STM</td>
+<td>Software Transactional Memory — механизм GHC для конкурентной работы с разделяемым состоянием без явных блокировок</td>
+</tr>
+<tr>
+<td>RR</td>
+<td>Resource Record — запись ресурса DNS</td>
+</tr>
+<tr>
+<td>NVS</td>
+<td>Name-Value Storage — сервис хранения пар имя→значение в блокчейне Emercoin</td>
+</tr>
+<tr>
+<td>pTLD</td>
+<td>Pseudo-TLD, домен верхнего уровня вне корневой зоны ICANN</td>
+</tr>
+<tr>
+<td>CCIP-Read</td>
+<td>EIP-3668 — механизм offchain-разрешения данных для смарт-контрактов Ethereum, используется в ENS</td>
+</tr>
+<tr>
+<td>FCP</td>
+<td>Freenet/Hyphanet Client Protocol — локальный API ноды Hyphanet <code>[Не проверено]</code></td>
+</tr>
+<tr>
+<td>SAM</td>
+<td>Simple Anonymous Messaging — локальный API I2P-роутера</td>
+</tr>
+<tr>
+<td>RNS</td>
+<td>Reticulum Network Stack</td>
+</tr>
+<tr>
+<td>ResolutionGraph</td>
+<td>Внутреннее промежуточное представление (IR) цепочки разрешения запроса через несколько адаптеров подряд (раздел 6.4)</td>
+</tr>
+<tr>
+<td>Supervisor tree</td>
+<td>Дерево надзора за конкурентными процессами/потоками по модели Erlang/OTP, реализуемое поверх STM и лёгких потоков GHC (раздел 5.3)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><em>(Расширенный глоссарий — Приложение А.)</em></p>
+<hr>
+<h2>2. Назначение и цели</h2>
+<h3>2.1. Цели</h3>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Цель</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ц1</td>
+<td>Единый DNS-фасад (UDP/TCP 53, опционально DoT/DoH/DoQ через edge-слой) поверх множества бэкендов резолюции</td>
+</tr>
+<tr>
+<td>Ц2</td>
+<td>Расширяемость без изменений ядра: новый адаптер = новый экземпляр <code>Resolver</code> + запись маршрутизации</td>
+</tr>
+<tr>
+<td>Ц3</td>
+<td>Изоляция отказов на уровне supervisor tree</td>
+</tr>
+<tr>
+<td>Ц4</td>
+<td>Наблюдаемость: метрики Prometheus по каждому адаптеру/зоне/кэшу, структурированные логи</td>
+</tr>
+<tr>
+<td>Ц5</td>
+<td>Декларативная YAML-конфигурация с hot-reload</td>
+</tr>
+<tr>
+<td>Ц6</td>
+<td>Backend HTTP API для интроспекции и программного доступа сторонних систем</td>
+</tr>
+<tr>
+<td>Ц7</td>
+<td>Промышленная эксплуатационная готовность: systemd, песочница, пакетирование Cabal/Nix/Guix</td>
+</tr>
+<tr>
+<td>Ц8</td>
+<td>Диагностируемость межпространственных цепочек резолюции через <code>ResolutionGraph</code> (раздел 6.4)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>2.2. Не-цели</h3>
+<ul>
+<li><code>polyresolver</code> <strong>НЕ ЯВЛЯЕТСЯ</strong> блокчейн-нодой — обращается к уже развёрнутым внешним нодам/демонам как к зависимостям;</li>
+<li><strong>НЕ ЯВЛЯЕТСЯ</strong> центром сертификации;</li>
+<li><strong>НЕ ЯВЛЯЕТСЯ</strong> VPN/прокси-клиентом — для сетей, требующих собственного транспорта (Tor, I2P, Yggdrasil, cjdns, Reticulum, радио-mesh), система ожидает уже поднятый локальный демон/API;</li>
+<li><strong>НЕ ЯВЛЯЕТСЯ</strong> реестром/регистратором имён — только читает существующие реестры.</li>
+</ul>
+<hr>
+<h2>3. Таксономия моделей разрешения имён (девятикатегорийная)</h2>
+<p>Прежде чем проектировать общий интерфейс, необходимо зафиксировать, что 20+ систем из задания не однородны по модели разрешения — попытка натянуть на все единую DNS-семантику без оговорок была бы методологической ошибкой. Классификация ниже — основа границ типов адаптеров в разделе 6.</p>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>№</th>
+<th>Категория</th>
+<th>Системы</th>
+<th>Суть модели</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>Иерархический реестр на блокчейне</td>
+<td>Handshake (<code>.hns</code>), Namecoin/<code>ncdns</code> (<code>.bit</code>), EmerDNS/Emercoin NVS (<code>.emc</code>, <code>.coin</code>, <code>.lib</code>, <code>.bazar</code>), ENS (<code>.eth</code>)</td>
+<td>Имя → запись в консенсусном реестре; классическая DNS-семантика (TTL, RR-типы) в основном сохраняется</td>
+</tr>
+<tr>
+<td>B</td>
+<td>Самоудостоверяющийся криптографический адрес</td>
+<td>Tor (<code>.onion</code> v3), I2P/i2pd, Yggdrasil, cjdns (<code>fc00::/8</code>), Reticulum</td>
+<td>Адрес выводится из публичного ключа криптографически; человекочитаемое имя — необязательная локальная надстройка</td>
+</tr>
+<tr>
+<td>C</td>
+<td>Контентная адресация + именующая надстройка</td>
+<td>IPFS/IPNS (+DNSLink), Hyphanet (CHK/SSK/USK/<strong>KSK</strong>), ZeroNet (ZeroName/<code>.bit</code>)</td>
+<td>Базовый идентификатор — хэш содержимого/ключа; имя добавляется отдельным механизмом</td>
+</tr>
+<tr>
+<td>D</td>
+<td>Петname-система с локальным корнем</td>
+<td>GNUnet/GNS (<code>.alt</code>, <code>.gns.alt</code>)</td>
+<td>Каждый узел администрирует свой корень, делегируя поддомены через petname-механизм; глобального корня нет по дизайну</td>
+</tr>
+<tr>
+<td>E</td>
+<td>Флудинг/анонс в mesh</td>
+<td>OLSR (<code>nameservice</code>), Meshtastic, Serval, Babel</td>
+<td>Имена (если есть) распространяются широковещательно по топологии, без иерархии</td>
+</tr>
+<tr>
+<td>F</td>
+<td>Реестр межсетевого даркнета</td>
+<td>dn42, anoNet</td>
+<td>DNS почти классический, но корень — приватная TLD-зона сообщества с отдельной anycast-инфраструктурой</td>
+</tr>
+<tr>
+<td>G</td>
+<td>Репутационно-фильтрующая надстройка</td>
+<td>DNSBL, DRBL <code>[Не проверено]</code></td>
+<td>Не резолвер в строгом смысле, а классификатор/фильтр в конвейере до/после резолюции</td>
+</tr>
+<tr>
+<td>H</td>
+<td>Транспорт, ошибочно смешиваемый с резолюцией</td>
+<td>Lantern</td>
+<td>Прокси обхода блокировок; не выполняет функции разрешения имён, релевантен только как опциональный исходящий транспорт</td>
+</tr>
+<tr>
+<td>I</td>
+<td>Неустановленный референт</td>
+<td>Calypso <code>[Не проверено]</code></td>
+<td>Система с этим названием, соответствующая контексту задачи, не идентифицирована (раздел 13.2)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2>4. Требования к системе (нормативный раздел, RFC 2119)</h2>
+<p>Ключевые слова <strong>MUST/MUST NOT/SHOULD/SHOULD NOT/MAY</strong> интерпретируются согласно RFC 2119. Это методическое решение для повышения проверяемости требований и построения будущей матрицы трассируемости «требование → тест» (раздел 20.4); оно не является фактическим утверждением о внешней системе и не маркируется эпистемическими пометками.</p>
+<h3>4.1. Центральный архитектурный инвариант</h3>
+<ul>
+<li><strong>ТРЕБ-001 [MUST].</strong> Каждое пространство имён <strong>ДОЛЖНО</strong> иметь ровно один authoritative-адаптер; неявный fallback между конфликтующими namespace <strong>НЕ ДОПУСКАЕТСЯ</strong>.</li>
+<li><strong>ТРЕБ-002 [MUST].</strong> Разрешение конфликта суффиксов <strong>ДОЛЖНО</strong> определяться явной политикой конфигурации (раздел 15.3), а не порядком регистрации адаптеров.</li>
+<li><strong>ТРЕБ-003 [MUST].</strong> Для суффикса без зарегистрированного адаптера система <strong>ДОЛЖНА</strong> вернуть <code>NXDOMAIN</code>/эквивалент «не найдено», не прибегая к эвристическому угадыванию.</li>
+<li><strong>ТРЕБ-004 [MUST].</strong> <code>Unbound</code>-бэкенд <strong>ДОЛЖЕН</strong> обслуживать исключительно обычное ICANN-пространство и <strong>НЕ ДОЛЖЕН</strong> получать маршруты на альтернативные корни.</li>
+<li><strong>ТРЕБ-005 [SHOULD].</strong> Нативный режим замены корня (в первую очередь Handshake) по умолчанию <strong>СЛЕДУЕТ</strong> отключать, включая только для явно доверенного view/ACL.</li>
+<li><strong>ТРЕБ-006 [MUST NOT].</strong> Адаптер <strong>НЕ ДОЛЖЕН</strong> синтезировать DNS RR-типы (прежде всего A/AAAA), для которых исходная система не предоставляет семантически корректного эквивалента; типизированные нестандартные данные (например, Ethereum-<code>contenthash</code>) возвращаются через вариант <code>Structured</code> (раздел 6.3), а не принудительным приведением к RR.</li>
+</ul>
+<h3>4.2. Функциональные требования</h3>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Требование</th>
+<th>Keyword</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ТРЕБ-010</td>
+<td>DNS-фасад поддерживает UDP/TCP 53 (конфигурируемо)</td>
+<td>MUST</td>
+</tr>
+<tr>
+<td>ТРЕБ-011</td>
+<td>Edge-слой терминирует DoT/DoH, опционально DoQ/DoH3</td>
+<td>SHOULD</td>
+</tr>
+<tr>
+<td>ТРЕБ-012</td>
+<td>Новый адаптер подключается без изменений ядра маршрутизации/кэша/API</td>
+<td>MUST</td>
+</tr>
+<tr>
+<td>ТРЕБ-013</td>
+<td>Backend HTTP API предоставляет интроспекцию кэша, health-статус адаптеров, принудительную инвалидацию</td>
+<td>MUST</td>
+</tr>
+<tr>
+<td>ТРЕБ-014</td>
+<td>YAML-конфигурация с <code>include</code>, env-overrides и hot-reload</td>
+<td>SHOULD</td>
+</tr>
+<tr>
+<td>ТРЕБ-015</td>
+<td>Экспорт метрик Prometheus</td>
+<td>MUST</td>
+</tr>
+<tr>
+<td>ТРЕБ-016</td>
+<td>Структурированное логирование (JSON/journald)</td>
+<td>SHOULD</td>
+</tr>
+<tr>
+<td>ТРЕБ-017</td>
+<td>Распределённая трассировка OpenTelemetry</td>
+<td>MAY (фаза 3+)</td>
+</tr>
+<tr>
+<td>ТРЕБ-018</td>
+<td><code>ResolutionGraph</code> строится для каждого запроса, пересекающего ≥2 адаптера, и обнаруживает циклы делегирования</td>
+<td>MUST</td>
+</tr>
+<tr>
+<td>ТРЕБ-019</td>
+<td>CLI-утилита <code>polyresolverctl</code> для диагностики и управления без прямого обращения к HTTP API</td>
+<td>SHOULD</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3>4.3. Требования к надёжности и изоляции отказов</h3>
+<ul>
+<li><strong>ТРЕБ-020 [MUST].</strong> Отказ одного адаптера <strong>НЕ ДОЛЖЕН</strong> деградировать обработку запросов к зонам других адаптеров — каждый вызов адаптера оборачивается границей тайм-аута/исключений в рамках supervisor-поддерева (раздел 5.3).</li>
+<li><strong>ТРЕБ-021 [SHOULD].</strong> Для authoritative-адаптеров при недоступности бэкенда система <strong>СЛЕДУЕТ</strong> отвечать <code>SERVFAIL</code> (fail closed) без неявного serve-stale; для convenience-адаптеров serve-stale <strong>МОЖЕТ</strong> быть явно включён политикой.</li>
+<li><strong>ТРЕБ-022 [SHOULD].</strong> Адаптеры, обращающиеся к RPC внешних демонов, <strong>СЛЕДУЕТ</strong> изолировать как отдельные процессы/supervisor-поддеревья.</li>
+</ul>
+<h3>4.4. Требования к безопасности (сводно; детализация — раздел 19)</h3>
+<ul>
+<li><strong>ТРЕБ-030 [MUST].</strong> RPC-порты внешних демонов <strong>НЕ ДОЛЖНЫ</strong> быть напрямую доступны из Интернета — только loopback/Unix-сокет.</li>
+<li><strong>ТРЕБ-031 [MUST].</strong> Принцип наименьших привилегий; привязка порта 53 — через <code>CAP_NET_BIND_SERVICE</code> либо <code>systemd socket activation</code>/<code>dnsdist</code>, не через запуск от <code>root</code>.</li>
+<li><strong>ТРЕБ-032 [SHOULD].</strong> Секреты не хранятся в открытом виде в основном конфиге — загрузка из отдельных файлов с ограниченными правами либо <code>systemd credentials</code>.</li>
+</ul>
+<h3>4.5. Требования к производительности</h3>
+<p>Ожидаемая задержка запроса как функция доли попаданий в кэш $h \in [0,1]$:</p>
+<p>$$
+\mathbb{E}[L] = h \cdot L_{\text{cache}} + (1-h),\bigl(L_{\text{cache}} + L_{\text{adapter}}\bigr)
+$$</p>
+<p>где $L_{\text{cache}}$ — задержка чтения <code>TVar</code> (порядка микросекунд), $L_{\text{adapter}}$ — задержка конкретного адаптера: от единиц миллисекунд для локального <code>Unbound</code>/<code>ncdns</code> до сотен миллисекунд для блокчейн-RPC или mesh-сетей с большим RTT. Поскольку $L_{\text{adapter}} \gg L_{\text{cache}}$ практически для всех небазовых адаптеров, эффективность кэша доминирует в итоговой пользовательской задержке — это прямое обоснование приоритета раздела 14. <code>[Предположение]</code>: ориентир p50 cache-hit пути — 1–5 мс на локальной машине без сетевого обращения; конкретный численный SLA не является проверенным фактом и подлежит уточнению нагрузочным тестированием (раздел 20).</p>
+<hr>
+<h2>5. Архитектура системы</h2>
+<h3>5.1. Трёхуровневая модель</h3>
+<pre class="mermaid">flowchart TB
+    subgraph Edge[&#34;Edge-слой&#34;]
+        DD[&#34;dnsdist (ACL, rate limit,\nDoT/DoH/DoQ termination,\nload balancing)&#34;]
+    end
+    subgraph Core[&#34;polyresolver-core (Haskell)&#34;]
+        RT[&#34;Routing Engine\n(namespace → adapter, ТРЕБ-001/002)&#34;]
+        CH[&#34;STM Cache\n(раздел 14)&#34;]
+        RG[&#34;ResolutionGraph\n(раздел 6.4)&#34;]
+        SV[&#34;Supervisor Tree\n(раздел 5.3)&#34;]
+        API[&#34;Servant Backend API\n(раздел 16)&#34;]
+        MX[&#34;Prometheus Exporter\n(раздел 17)&#34;]
+    end
+    subgraph Adapters[&#34;Адаптеры (in-process или IPC, раздел 6.5)&#34;]
+        A1[&#34;Unbound / ncdns / EmerDNS / hsd / ENS&#34;]
+        A2[&#34;Tor / I2P-i2pd&#34;]
+        A3[&#34;Yggdrasil / cjdns / Reticulum / OLSR / Meshtastic / Babel / Serval&#34;]
+        A4[&#34;IPFS-IPNS / ZeroNet / Hyphanet / GNUnet-GNS&#34;]
+        A5[&#34;dn42 / anoNet&#34;]
+        A6[&#34;DNSBL / DRBL&#34;]
+    end
+    Clients[&#34;DNS / DoT / DoH клиенты&#34;] --&gt; DD
+    DD --&gt; RT
+    RT --&gt; CH
+    CH -.cache miss.-&gt; A1 &amp; A2 &amp; A3 &amp; A4 &amp; A5 &amp; A6
+    RT --&gt; RG
+    SV -. надзор .-&gt; A1 &amp; A2 &amp; A3 &amp; A4 &amp; A5 &amp; A6
+    API -.-&gt; CH
+    API -.-&gt; SV
+    HTTPClients[&#34;Сторонние сервисы (HTTP/JSON)&#34;] --&gt; API
+</pre>
+<p>Обоснование трёхуровневой модели: <strong>ТРЕБ-011/4.4</strong> требуют терминации современных транспортов (DoT/DoH/DoQ) и ACL/rate-limiting на границе сети; вынесение этой функции в выделенный edge-компонент, а не в ядро <code>polyresolver-core</code>, соответствует принципу единственной ответственности и снижает поверхность атаки на сам процесс резолвера. В качестве edge-компонента предлагается <code>dnsdist</code> — DNS-aware прокси/балансировщик проекта PowerDNS. Подтверждённые свойства (просмотр первоисточников в ходе подготовки документа):</p>
+<ul>
+<li><code>dnsdist</code> спроектирован как слой балансировки/прокси перед авторитативными или рекурсивными серверами и по умолчанию применяет ACL, ограничивающий источники private-диапазоном RFC 1918, что препятствует случайному превращению в открытый резолвер².</li>
+<li>поддерживает одновременную терминацию DoT, DoH, DoQ и DoH3 на frontend-стороне и может транслировать между протоколами (например, принимать DoH и пересылать backend'у обычный UDP)³;</li>
+<li>поддерживает динамическую переконфигурацию через консоль, политики выбора backend'а (<code>leastOutstanding</code>, <code>firstAvailable</code>, consistent hashing и др.), packet cache и экспорт метрик через Carbon/Prometheus/HTTP API/консоль⁴;</li>
+<li>конфигурация — Lua и, начиная с версии 2.0, декларативный YAML (опционально с Rust-based парсером)⁵.</li>
+</ul>
+<p>Разделение ответственности:</p>
+<ul>
+<li><strong><code>dnsdist</code> (edge):</strong> ACL, rate-limiting, терминация DoT/DoH/DoQ, первичная балансировка — <strong>НЕ ВЫПОЛНЯЕТ</strong> резолюцию и не содержит знаний о namespace-специфичной семантике;</li>
+<li><strong><code>polyresolver-core</code> (routing/policy/cache):</strong> маршрутизация по ТРЕБ-001/002, STM-кэш, построение <code>ResolutionGraph</code>, supervisor tree, нормализация ответов адаптеров;</li>
+<li><strong>адаптеры:</strong> вся namespace-специфичная логика, изолированная друг от друга.</li>
+</ul>
+<h3>5.2. Состав пакетов (Cabal multi-package)</h3>
+<p><code>[Вывод]</code>: структура — перенос по аналогии с монорепозиторием <code>Surypus</code> (несколько независимых Cabal-пакетов под единым <code>cabal.project</code>), адаптированный под задачи резолвера; это предложение, а не зафиксированное внешнее требование.</p>
+<pre><code class="language-text">polyresolver/
+├── cabal.project
+├── polyresolver-types/        -- общие типы: ResolveRequest, ResolveResult,
+│                               --   ZonePattern, ResolutionGraph, ошибки
+├── polyresolver-core/         -- Routing Engine, Supervisor Tree, STM-кэш
+├── polyresolver-dns/          -- DNS wire-протокол поверх dnsext/network-dns
+├── polyresolver-api/          -- Servant backend API
+├── polyresolver-metrics/      -- интеграция prometheus-client
+├── polyresolver-config/       -- YAML-загрузчик, схема, hot-reload
+├── polyresolver-plugin-sdk/   -- Plugin SDK: ABI, IPC-клиент/сервер (раздел 6.5)
+├── polyresolver-adapter-unbound/
+├── polyresolver-adapter-ncdns/
+├── polyresolver-adapter-emerdns/
+├── polyresolver-adapter-hsd/
+├── polyresolver-adapter-ens/
+├── polyresolver-adapter-tor/
+├── polyresolver-adapter-i2p/
+├── polyresolver-adapter-mesh/      -- Yggdrasil, cjdns, Reticulum, OLSR, Meshtastic, Babel, Serval
+├── polyresolver-adapter-decentweb/ -- IPFS/IPNS, ZeroNet, Hyphanet, GNUnet/GNS
+├── polyresolver-adapter-darknet/   -- dn42, anoNet
+├── polyresolver-adapter-filter/    -- DNSBL, DRBL
+├── polyresolver-ctl/           -- CLI polyresolverctl
+└── polyresolver-server/         -- исполняемый файл, собирающий всё воедино
+</code></pre>
+<h3>5.3. Конкурентная модель: STM-актор + supervisor tree</h3>
+<p><code>[Вывод]</code>: модель является инженерным предложением, вдохновлённым Erlang/OTP supervisor trees, но реализуемым идиоматическими средствами GHC (лёгкие потоки <code>forkIO</code>/<code>async</code>, разделяемое состояние через <code>STM</code>), а не портом какой-либо конкретной библиотеки — это не факт о существующей системе, а архитектурное решение.</p>
+<p>Каждый долгоживущий конкурентный компонент (health-check цикл адаптера, IPC-соединение плагина, периодический sweep STM-кэша, экспортёр метрик) представлен как «актор» — поток, запущенный под наблюдением узла supervisor-дерева:</p>
+<pre><code class="language-haskell">data RestartStrategy
+  = OneForOne      -- перезапускается только упавший актор
+  | RestForOne     -- перезапускаются упавший актор и все запущенные после него
+  | AllForOne      -- перезапускается всё поддерево
+
+data ChildSpec = ChildSpec
+  { childName      :: Text
+  , childAction    :: IO ()
+  , childRestart   :: RestartPolicy      -- Permanent | Transient | Temporary
+  , childShutdown  :: ShutdownTimeout
+  }
+
+data Supervisor = Supervisor
+  { supStrategy :: RestartStrategy
+  , supChildren :: TVar [ (ChildSpec, Async ()) ]
+  , supMaxRestarts :: Int                -- порог интенсивности рестартов в окне supPeriod
+  , supPeriod      :: NominalDiffTime
+  }
+</code></pre>
+<p>Каждый адаптер (раздел 6) регистрирует себя как <code>ChildSpec</code> в соответствующем supervisor-поддереве (<strong>ТРЕБ-020/022</strong>): падение HTTP/RPC-клиента одного адаптера не вызывает каскадного сбоя остальных, а перезапускается согласно <code>RestartPolicy</code> с экспоненциальной задержкой (<code>backoff</code>), что отражается в метриках <code>polyresolver_adapter_restarts_total</code> (раздел 17).</p>
+<h3>5.4. Поток обработки запроса</h3>
+<ol>
+<li>DNS-пакет поступает на <code>dnsdist</code>, проходит ACL/rate-limit, пересылается на <code>polyresolver-core</code> (UDP/TCP, loopback или Unix-сокет);</li>
+<li><code>polyresolver-dns</code> декодирует wire-формат (через <code>dnsext</code>, раздел 6.1), формирует <code>ResolveRequest</code>;</li>
+<li>Routing Engine определяет namespace по правилу longest-suffix-match среди зарегистрированных <code>ZonePattern</code> (ТРЕБ-001/002); при конфликте — политика раздела 15.3;</li>
+<li>STM-кэш проверяется по ключу <code>(qname, qtype, adapterId)</code>; при попадании — немедленный ответ, инкремент <code>polyresolver_cache_hits_total</code>;</li>
+<li>При промахе — вызов <code>resolve</code> соответствующего адаптера внутри границы тайм-аута supervisor-поддерева; конкурентные идентичные запросы дедуплицируются через singleflight-механизм STM (раздел 14.3), чтобы не создавать «громовое стадо» на бэкенд;</li>
+<li>Ответ адаптера нормализуется в <code>ResolveResult</code> (раздел 6.3); если ответ требует делегирования в другой адаптер (<code>Delegate</code>), шаг 3–6 повторяется, узел добавляется в <code>ResolutionGraph</code>, который проверяется на цикл (<strong>ТРЕБ-018</strong>) перед продолжением;</li>
+<li>Результат кэшируется с TTL, производным от ответа бэкенда (адаптивная поправка — раздел 14.2), метрики записываются, ответ возвращается клиенту через <code>dnsdist</code>.</li>
+</ol>
+<h3>5.5. Сопутствующая документация (анонс; детали — раздел 22)</h3>
+<p>Полная детализация Plugin SDK ABI, модели угроз безопасности, протокола IPC между процессами и руководств администратора/разработчика выносится в отдельные документы-спутники (Vision/SRS/SAD уже объединены здесь; Plugin SDK Specification, Security Model, Protocol Specification, Developer Guide, Administrator Guide, Operations Manual, RFC/ADR Repository — раздел 22), чтобы настоящий документ оставался пригодным как рабочее ТЗ, а не разрастался в неограниченный мегадокумент.</p>
+<hr>
+<h2>6. Модель адаптеров</h2>
+<h3>6.1. Выбор DNS-библиотеки для wire-уровня</h3>
+<p>Для разбора/сериализации DNS wire-формата и реализации рекурсивного/stub-клиента предлагается семейство пакетов <code>dnsext</code> (ранее часть пакета <code>dns</code> авторства Kazu Yamamoto; на момент подготовки документа разработка сконцентрирована в репозитории <code>iijlab/dnsext</code>, предоставляющем полный резолвер и stub-клиент)⁶. <code>[Не проверено]</code>: также существует более новый пакет <code>dnsbase</code>, анонсированный как «гибкий преемник» библиотеки <code>dns</code>; на момент подготовки документа независимая зрелость этого пакета не проверялась достаточно глубоко для рекомендации в качестве основного выбора — он зафиксирован как альтернатива для оценки на этапе реализации (Фаза 0). Классический пакет <code>dns</code> (устаревающий) в новых проектах не рекомендуется.</p>
+<h3>6.2. Типовой класс <code>Resolver</code></h3>
+<pre><code class="language-haskell">-- polyresolver-types
+
+data ZonePattern
+  = SuffixMatch Text                  -- например &#34;.hns&#34;, &#34;.bit&#34;, &#34;.i2p&#34;
+  | ExactMatch  Text
+  | PredicateMatch (Text -&gt; Bool)     -- произвольная функция-предикат (например, для .onion v3 — проверка длины/алфавита)
+
+data ResolveRequest = ResolveRequest
+  { reqName      :: DNS.Domain
+  , reqType      :: DNS.TYPE
+  , reqClientCtx :: ClientContext      -- для view/ACL (ТРЕБ-005)
+  , reqGraph     :: ResolutionGraph     -- накопленная цепочка делегирований (раздел 6.4)
+  }
+
+data HealthStatus = Healthy | Degraded Text | Unhealthy Text
+
+class Resolver a where
+  resolverName   :: a -&gt; Text
+  resolverZones  :: a -&gt; NonEmpty ZonePattern
+  resolverModel  :: a -&gt; NamingModel     -- одна из категорий A–I (раздел 3) — для диагностики/метрик
+  resolve        :: a -&gt; ResolveRequest -&gt; IO (Either ResolveError ResolveResult)
+  healthCheck    :: a -&gt; IO HealthStatus
+  shutdown       :: a -&gt; IO ()
+</code></pre>
+<h3>6.3. <code>ResolveResult</code>: типизированный результат резолюции</h3>
+<p>Непосредственное следствие <strong>ТРЕБ-006</strong>: результат не может быть насильно приведён к классической DNS RR там, где исходная система не предоставляет эквивалента.</p>
+<pre><code class="language-haskell">data ResolveResult
+  = Classic (NonEmpty DNS.ResourceRecord)
+    -- ^ Стандартные DNS RR (A/AAAA/TXT/CNAME/…) — для адаптеров категории A
+    --   (Handshake, ncdns, EmerDNS) и части категории C (DNSLink)
+
+  | Structured StructuredRecord
+    -- ^ Типизированные нестандартные данные без потери семантики:
+    --   Ethereum-адрес аккаунта/контракта, ENS contenthash, I2P destination,
+    --   Reticulum destination hash, KSK Hyphanet и т.п. Возвращается клиенту
+    --   HTTP API как есть; в DNS-фасад проецируется в TXT только если это
+    --   явно разрешено политикой конфигурации, с маркировкой &#34;non-RR projection&#34;
+
+  | Delegate DelegateTarget
+    -- ^ Запрос должен быть передан другому адаптеру/view (например, ENS
+    --   contenthash указывает на ipfs:// → делегирование в IPFS-адаптер).
+    --   Каждое делегирование — новый узел ResolutionGraph (раздел 6.4)
+
+  | NotFound
+    -- ^ Authoritative &#34;не найдено&#34; для данного namespace (→ NXDOMAIN)
+
+  | TemporarilyUnavailable BackendError
+    -- ^ Бэкенд недоступен; интерпретация (SERVFAIL / serve-stale) — по
+    --   политике ТРЕБ-021
+
+data StructuredRecord = StructuredRecord
+  { srKind   :: StructuredKind   -- EthAddress | ContentHash | CryptoDestination | ContentKey | …
+  , srValue  :: ByteString
+  , srMeta   :: Map Text Text    -- произвольные доп. поля конкретной системы
+  }
+
+data DelegateTarget = DelegateTarget
+  { dtZone   :: ZonePattern
+  , dtName   :: DNS.Domain
+  , dtReason :: Text              -- для диагностики/ResolutionGraph
+  }
+</code></pre>
+<h3>6.4. <code>ResolutionGraph</code>: IR для диагностики и обнаружения циклов</h3>
+<p><strong>ТРЕБ-018</strong> требует построения графа цепочки резолюции для любого запроса, пересекающего ≥2 адаптера (типичный случай — многоступенчатое делегирование, например ENS → IPFS → DNSLink). Граф используется для (а) диагностики через backend API/CLI (трассировка «почему ответ именно такой»), и (б) предотвращения бесконечных циклов делегирования между адаптерами.</p>
+<pre><code class="language-haskell">data ResolutionNode = ResolutionNode
+  { rnAdapter :: Text
+  , rnName    :: DNS.Domain
+  , rnType    :: DNS.TYPE
+  , rnAt      :: UTCTime
+  }
+
+newtype ResolutionGraph = ResolutionGraph (Seq ResolutionNode)
+  -- Реализован как линейная цепочка (а не общий граф) до тех пор, пока
+  -- не появится адаптер с ветвящимся делегированием (на момент ТЗ — не
+  -- выявлен); при необходимости тип обобщается до Data.Graph-подобной
+  -- структуры без изменения внешнего интерфейса Resolver.
+
+detectCycle :: ResolutionGraph -&gt; ResolutionNode -&gt; Either CycleError ResolutionGraph
+-- MUST: вызывается перед каждым шагом Delegate (ТРЕБ-018); при обнаружении
+-- узла (adapter, name, type), уже присутствующего в графе, резолюция
+-- прерывается с ResolveError, а не зацикливается.
+</code></pre>
+<p>Свойство-инвариант для property-based тестирования (раздел 20.2): для любой конечной конфигурации адаптеров и любой последовательности <code>Delegate</code>-ответов, составленной генератором, <code>detectCycle</code> гарантированно завершает резолюцию за конечное число шагов, не превышающее числа зарегистрированных адаптеров.</p>
+<h3>6.5. Plugin SDK: внепроцессные адаптеры</h3>
+<p>Часть адаптеров (в первую очередь требующие тяжёлых или потенциально нестабильных нативных зависимостей — например, обвязка над <code>libunbound</code>, SAM-клиент I2P с длительным соединением, будущие адаптеры на других языках) <strong>МОЖЕТ</strong> исполняться как отдельный процесс, взаимодействующий с <code>polyresolver-core</code> по IPC, вместо линковки in-process. Рассматриваются два равно обоснованных варианта сериализации/IPC:</p>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Вариант</th>
+<th>Плюсы</th>
+<th>Минусы</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cap'n Proto</strong></td>
+<td>Нулевое копирование при десериализации, компактная бинарная схема, естественная поддержка потоковой передачи частичных ответов (для будущих адаптеров с инкрементальными ответами — например, потоковое перечисление записей Namecoin)</td>
+<td><code>[Не проверено]</code>: текущая зрелость и сопровождаемость Haskell-биндингов на момент подготовки документа отдельно не проверялась — требуется оценка на этапе реализации (Фаза 2)</td>
+</tr>
+<tr>
+<td><strong>gRPC</strong></td>
+<td>Широкая кроссязыковая экосистема, удобен для адаптеров на других языках (например, обёртка над существующими Go/Python-клиентами внешних сетей), встроенная поддержка стриминга и дедлайнов</td>
+<td><code>[Не проверено]</code>: состояние поддерживаемости Haskell-реализации gRPC-клиента/сервера на момент подготовки документа отдельно не проверялось</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Решение между ними не фиксируется в настоящем ТЗ как окончательное — это явно обозначенный открытый вопрос Фазы 2 (раздел 23), решаемый через короткий технический spike с обеими библиотеками до выбора. В любом случае Plugin SDK предоставляет:</p>
+<ul>
+<li>версионируемый ABI запрос/ответ, изоморфный типам раздела 6.2–6.3 (<code>ResolveRequest</code>/<code>ResolveResult</code>/<code>HealthStatus</code>);</li>
+<li>capability negotiation при подключении плагина (заявленные зоны, поддержка потоковых частичных ответов, поддержка асинхронной отмены запроса);</li>
+<li>изоляцию процесса плагина как отдельного <code>ChildSpec</code> в supervisor-дереве (раздел 5.3) с собственной политикой перезапуска и, на уровне систем Linux, собственным systemd-юнитом/sandboxing-профилем (раздел 19);</li>
+<li>горячую регистрацию/дерегистрацию плагина без перезапуска <code>polyresolver-core</code> (согласуется с ТРЕБ-012/014).</li>
+</ul>
+<hr>
+<h2>7. Базовые («готовые») адаптеры — детальная спецификация</h2>
+<p>Эти пять адаптеров образуют Фазу 1 разработки (раздел 21) и специфицируются с максимальной детализацией, согласно прямому указанию в задании («готовые адаптеры»).</p>
+<h3>7.1. Unbound (категория A/база ICANN-DNS)</h3>
+<p><strong>Роль:</strong> единственный бэкенд для обычного ICANN-пространства (ТРЕБ-004); сам <code>polyresolver</code> рекурсии не выполняет.</p>
+<p><strong>Режим интеграции:</strong> <code>polyresolver</code> <strong>НЕ</strong> линкуется с <code>libunbound</code> напрямую в базовом варианте — адаптер пересылает запрос уже запущенному демону <code>unbound</code> по loopback UDP/TCP (порт конфигурируется, типично 127.0.0.1:5335 во избежание конфликта с портом, на котором слушает edge-слой/<code>dnsdist</code>). FFI-биндинг к <code>libunbound</code> зафиксирован как опциональное усиление Фазы 3+ (снижает число сетевых прыжков ценой более сложной сборки и управления памятью через FFI).</p>
+<pre><code class="language-yaml">adapters:
+  unbound:
+    mode: forward         # forward | libunbound (Фаза 3+)
+    upstream: &#34;127.0.0.1:5335&#34;
+    timeout_ms: 2000
+    zones: [&#34;*&#34;]           # catch-all для всего, не покрытого другими адаптерами
+    priority: lowest        # явно самый низкий приоритет при конфликте (ТРЕБ-002)
+</code></pre>
+<h3>7.2. <code>ncdns</code> — Namecoin → DNS (<code>.bit</code>, категория A)</h3>
+<p><code>ncdns</code> — демон на Go, реализующий мост Namecoin → DNS: читает NVS-подобные записи из <code>namecoind</code> по JSON-RPC и выступает authoritative-сервером для <code>.bit</code>, опираясь на <code>Unbound</code> как recursor для остального дерева, с поддержкой DNSSEC-подписи обслуживаемой зоны⁷.</p>
+<p><strong>Режим интеграции — «делегированный» (Фаза 1, по умолчанию):</strong> <code>polyresolver</code> пересылает <code>.bit</code>-запросы уже запущенному <code>ncdns</code> по loopback, аналогично Unbound-адаптеру. Задокументированная практика самого <code>ncdns</code> — обращение к <code>namecoind</code> через loopback-only RPC с cookie-аутентификацией, без доступа к функциям кошелька на резолвер-узле⁸ — такое разделение привилегий сохраняется и рекомендуется для развёртывания <code>ncdns</code> как зависимости <code>polyresolver</code>, а не изменяется системой.</p>
+<p><strong>Режим «нативный» (Фаза 2+, опционально):</strong> прямой JSON-RPC клиент к <code>namecoind</code> (<code>name_show</code>) с собственным парсингом NVS-записей внутри <code>polyresolver</code>, минуя промежуточный DNS-прыжок через <code>ncdns</code>. Компромисс: меньшая задержка ценой дублирования логики преобразования NVS→RR, уже реализованной и сопровождаемой в <code>ncdns</code>.</p>
+<pre><code class="language-yaml">adapters:
+  ncdns:
+    mode: delegated          # delegated | native (Фаза 2+)
+    upstream: &#34;127.0.0.1:5333&#34;
+    zones: [&#34;.bit&#34;]
+    priority: 10
+    # native-режим (Фаза 2+):
+    # namecoin_rpc: {host: &#34;127.0.0.1&#34;, port: 8336, cookie_path: &#34;/run/namecoin/.cookie&#34;}
+</code></pre>
+<h3>7.3. EmerDNS — Emercoin NVS (<code>.emc</code>, <code>.coin</code>, <code>.lib</code>, <code>.bazar</code>, категория A)</h3>
+<p>Emercoin предоставляет сервис NVS (Name-Value Storage) общего назначения; подмножество с префиксом <code>dns:</code> используется как децентрализованный аналог DNS, поддерживающий стандартный RFC 1034/1035 UDP DNS-протокол — встроенный DNS-сервер присутствует в каждом Emercoin-кошельке и слушает запросы напрямую⁹. Задокументированные зоны включают <code>.lib</code>, <code>.emc</code>, <code>.coin</code>, <code>.bazar</code> (список может расширяться операторами сети)¹⁰. <code>[Вывод]</code>: поскольку NVS — хранилище общего назначения, в нём также исторически регистрировались записи для сторонних систем именования (например, сопоставление <code>i2p:</code> → I2P-назначение) — это релевантно как потенциальная точка пересечения с I2P-адаптером (раздел 8.2), но не меняет собственно DNS-функцию EmerDNS.</p>
+<p><strong>Режим «делегированный»:</strong> пересылка на встроенный DNS-сервер Emercoin-кошелька по loopback (порт конфигурируется оператором ноды).
+<strong>Режим «нативный» (Фаза 2+):</strong> прямой JSON-RPC клиент (<code>name_show</code>) к <code>emercoind</code> с собственной интерпретацией <code>dns:</code>-записей.</p>
+<pre><code class="language-yaml">adapters:
+  emerdns:
+    mode: delegated
+    upstream: &#34;127.0.0.1:5333&#34;   # порт DNS-сервера Emercoin-кошелька, конфигурируется
+    zones: [&#34;.emc&#34;, &#34;.coin&#34;, &#34;.lib&#34;, &#34;.bazar&#34;]
+    priority: 10
+</code></pre>
+<h3>7.4. <code>hsd</code>/<code>hnsd</code> — Handshake (<code>.hns</code>, категория A)</h3>
+<p>Handshake — блокчейн-реестр корневых зон; <code>hsd</code> (Node.js, эталонная полная нода) по умолчанию поднимает authoritative- и рекурсивный DNS-сервер — в документации основного репозитория указаны порты 5349 (authoritative) и 5350 (recursive)¹¹, тогда как в более старых форках/документации встречаются значения 15359/15360 <code>[Не проверено]</code> — расхождение не разрешено в рамках подготовки документа, конкретный порт <strong>ДОЛЖЕН</strong> проверяться по факту разворачиваемой версии на этапе конфигурирования. <code>hnsd</code> — облегчённый SPV-резолвер на C, также поднимающий authoritative+recursive связку поверх <code>libunbound</code> и P2P-доказательств от полных нод сети¹². <code>hsd</code> предоставляет RPC/REST API (bitcoind-подобный) для запросов уровня имени¹³.</p>
+<p>Примечательно: сам <code>hsd</code> поддерживает механизм middleware-функций (<code>ns.middle</code>) для перехвата разрешения определённых TLD и перенаправления в сторонние системы (в документированном примере — в Namecoin)¹⁴ — это прецедент именно той задачи, которую решает <code>polyresolver</code> на уровне целой экосистемы, а не одного TLD, и служит независимым архитектурным подтверждением выбранного паттерна «адаптер на пространство имён».</p>
+<p><strong>Режим «делегированный» (по умолчанию, Фаза 1):</strong> пересылка <code>.hns</code>-запросов на локальный <code>hnsd</code>/<code>hsd</code> recursive-порт.
+<strong>Режим «нативный» (Фаза 2+):</strong> прямой RPC к <code>hsd</code> на уровне конкретного имени, минуя полный DNS-прыжок, при доверии к удалённой/локальной полной ноде.</p>
+<p>Согласно <strong>ТРЕБ-005</strong>, нативный режим «подмена корня» (когда <code>hsd</code> отвечает и за обычные TLD, которых нет в Handshake, по правилам этой сети) отключён по умолчанию и доступен только явно сконфигурированному доверенному view.</p>
+<pre><code class="language-yaml">adapters:
+  hsd:
+    mode: delegated
+    upstream: &#34;127.0.0.1:5350&#34;     # уточнить фактический recursive-порт развёрнутой версии
+    zones: [&#34;.hns&#34;]
+    priority: 10
+    native_root_view: null          # имя view, которому разрешён native-root (ТРЕБ-005); по умолчанию отключено
+</code></pre>
+<h3>7.5. ENS — Ethereum Name Service (<code>.eth</code>, категория A)</h3>
+<p>ENS разрешает <code>.eth</code>-имена через пару смарт-контрактов: Registry (отображает namehash на адрес резолвера зоны) и Resolver (хранит типизированные записи — <code>addr()</code>, <code>contenthash()</code>, произвольные TXT-подобные поля); для поддоменов и wildcard-резолюции применяется ENSIP-10, offchain-данные читаются через CCIP-Read (EIP-3668) с верификацией ответа шлюза¹⁵.</p>
+<p><strong>Режим «прямой» (рекомендуемый, Фаза 1):</strong> клиент JSON-RPC к Ethereum-ноде (локальная нода либо сторонний провайдер) + ABI-кодированные вызовы Registry/Resolver; результаты — <strong>строго</strong> через <code>Structured</code> (ТРЕБ-006): <code>addr()</code> → <code>StructuredKind = EthAddress</code>, <code>contenthash()</code> → <code>StructuredKind = ContentHash</code>, с последующим <code>Delegate</code> в IPFS/Hyphanet/Arweave-адаптер в зависимости от схемы contenthash, если соответствующий адаптер зарегистрирован (раздел 6.3–6.4). Запрос классического RR-типа (A/AAAA) к <code>.eth</code>-имени, у которого нет семантически корректного соответствия, <strong>ДОЛЖЕН</strong> возвращать <code>NotFound</code>, а не изобретённый адрес.</p>
+<p><strong>Режим «шлюз» (альтернатива):</strong> HTTP-запрос к DNS-шлюзу ENS (публичные примеры — <code>eth.limo</code>, исторически также <code>eth.link</code>)¹⁶ — проще в реализации, но переносит доверие на оператора шлюза; <code>[Не проверено]</code>: актуальный операционный статус конкретных публичных шлюзов на момент эксплуатации <strong>ДОЛЖЕН</strong> быть проверен оператором отдельно, поскольку это быстро меняющаяся инфраструктура.</p>
+<pre><code class="language-yaml">adapters:
+  ens:
+    mode: direct                 # direct | gateway
+    ethereum_rpc: &#34;https://localhost:8545&#34;   # или сторонний провайдер
+    registry_address: &#34;0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e&#34;   # [Не проверено] — сверить с актуальной документацией ENS перед использованием
+    zones: [&#34;.eth&#34;]
+    priority: 10
+    fabricate_a_aaaa: false        # ТРЕБ-006: запрещено по умолчанию, неизменяемо без явного override с предупреждением
+</code></pre>
+<hr>
+<h2>8. Сети анонимизации</h2>
+<h3>8.1. Tor — <code>.onion</code> v3 (категория B)</h3>
+<p>Адреса v3 (56 символов base32, выводятся из Ed25519-ключа) самоудостоверяющиеся — отдельная инфраструктура разрешения имени не требуется: «резолюция» сводится к синтаксической валидации структуры адреса и передаче транспортного запроса локальному Tor-клиенту (SOCKS5-прокси, опционально <code>DNSPort</code>). Адаптер <strong>НЕ ДОЛЖЕН</strong> выполнять сетевой lookup сам — только валидировать формат и проксировать факт «это валидный onion-адрес» потребителю через <code>Structured { srKind = CryptoDestination }</code>.</p>
+<pre><code class="language-yaml">adapters:
+  tor:
+    mode: passthrough
+    socks_proxy: &#34;127.0.0.1:9050&#34;
+    zones: [&#34;.onion&#34;]
+    priority: 10
+</code></pre>
+<h3>8.2. I2P / i2pd — <code>.i2p</code> (категория B)</h3>
+<p>I2P использует «адресную книгу» (addressbook) — подписочную модель статических списков host→destination — и локальный API SAM (Simple Anonymous Messaging) для программных lookup'ов, выполняемых приложениями через команду <code>NAMING LOOKUP</code>. <code>i2pd</code> — независимая C++-реализация протокола I2P, сетевая и адресная семантика совпадает с эталонным Java-роутером, поэтому один адаптер обслуживает оба случая, различаясь только путём/портом локального SAM-сокета в конфигурации.</p>
+<pre><code class="language-yaml">adapters:
+  i2p:
+    mode: sam
+    sam_endpoint: &#34;127.0.0.1:7656&#34;     # [Не проверено]: порт по умолчанию согласно общей практике I2P/SAM, сверить с конкретной установкой
+    zones: [&#34;.i2p&#34;]
+    priority: 10
+</code></pre>
+<hr>
+<h2>9. Mesh- и overlay-сети</h2>
+<p>Эта группа — наиболее методологически разнородная: часть систем <strong>не имеет</strong> канонического глобального механизма именования по дизайну (категория B/E), и адаптер в таких случаях обязан честно отражать это ограничение, а не изобретать единый реестр там, где сообщество само его не выработало.</p>
+<h3>9.1. Yggdrasil (категория B)</h3>
+<p><code>[Не проверено]</code>: в ходе подготовки документа не обнаружено канонического, общепринятого глобального сервиса именования для Yggdrasil — адресация выводится криптографически из Ed25519-ключей аналогично cjdns. Адаптер реализуется как реестр статических petname-записей (локальный YAML-файл/конфигурация оператора), с явным флагом «не является глобальным DNS-эквивалентом» в метаданных ответа.</p>
+<h3>9.2. cjdns / Hyperboria (категория B)</h3>
+<p>Документация сообщества Hyperboria прямо фиксирует фрагментированную и нестабильную историю попыток создать DNS для сети: несколько конкурирующих систем (упоминаются <code>hypeDNS</code> и <code>rainflyDNS</code>), причём на момент соответствующих заметок разработка части из них была приостановлена, а сопровождающий одной из систем сложил полномочия, оставив DNS-слой «в состоянии перехода»¹⁷. <code>[Не проверено]</code>: актуальный статус какого-либо из этих проектов на текущий момент не проверялся и, по независимым признакам в первоисточниках, с высокой вероятностью нестабилен. Адаптер проектируется как <strong>подключаемая точка</strong> (аналог <code>DelegateTarget</code> на внешний, оператором указанный сервис), а не как встроенная реализация конкретного решения — архитектура не должна жёстко зависеть от того, какая DNS-инициатива Hyperboria активна на момент эксплуатации.</p>
+<h3>9.3. Reticulum (категория B)</h3>
+<p>Адресация Reticulum принципиально отличается от DNS-модели: <code>destination hash</code> — детерминированная функция от строки «aspects» приложения и публичного ключа identity, вычисляемая <strong>локально</strong>, без сетевого запроса (<code>RNS.Destination.hash_from_name_and_identity</code>)¹⁸. Собственно «разрешение» в понимании DNS здесь не требуется — задача адаптера иная: поддерживать каталог человекочитаемых petname → (identity, aspects), а доступность/маршрут до вычисленного хэша определяется отдельным протоколом анонсов RNS, не относящимся к функции именования. Адаптер реализован как слушатель анонсов (накопление <code>app_data</code> в реверс-индекс) + статический конфигурируемый реестр.</p>
+<h3>9.4. OLSR (категория E)</h3>
+<p>Плагин <code>nameservice</code> для <code>olsrd</code> распространяет записи вида «hostname → адрес» широковещательно по топологии OLSR в формате, подобном <code>/etc/hosts</code>, записывая результат в файл (типично <code>/var/run/hosts_olsr</code>), который может опционально обслуживаться через <code>dnsmasq</code> как мост к настоящему DNS-протоколу¹⁹. Адаптер <code>polyresolver</code> реализуется как наблюдатель за этим файлом (file-watcher) с периодическим перечитыванием и инвалидацией кэша при изменении.</p>
+<h3>9.5. Meshtastic (категория E, <code>[Не проверено]</code>)</h3>
+<p>LoRa-based mesh для офлайн-обмена сообщениями; узлы идентифицируются числовыми ID и короткими именами, обмен метаданными узлов возможен через Bluetooth/serial API устройства либо MQTT-мост. <code>[Не проверено]</code>: специализированного DNS-подобного механизма разрешения имён в экосистеме Meshtastic в ходе подготовки документа не обнаружено и отдельно не проверялось — архитектурное предложение (каталог, собираемый из MQTT-топика с пакетами информации об узлах) помечается как <code>[Предположение]</code>, требующее сверки с актуальной протокольной схемой Meshtastic (protobuf) непосредственно перед реализацией в Фазе 4.</p>
+<h3>9.6. Babel (категория E, <code>[Не проверено]</code>)</h3>
+<p>Чистый протокол маршрутизации (RFC 8966/8967) без встроенного слоя именования <code>[Не проверено]</code> — для получения человекочитаемых имён в сети, построенной на Babel, потребуется отдельная надстройка (например, mDNS/Avahi поверх полученной топологии), не являющаяся частью самого протокола маршрутизации. Адаптер Фазы 4 ограничивается ролью моста к такой внешней надстройке, если она сконфигурирована оператором.</p>
+<h3>9.7. Serval (категория E, <code>[Не проверено]</code>)</h3>
+<p>Serval Mesh / Serval DNA использует Subscriber ID (SID) как адрес уровня приложения; при наличии именующего слоя он, по доступным сведениям, связан с компонентом Rhizome (store-and-forward хранилище) <code>[Не проверено]</code> — точная текущая архитектура не проверялась независимо в ходе подготовки документа и зафиксирована как требующая валидации перед реализацией Фазы 4.</p>
+<pre><code class="language-yaml">adapters:
+  mesh:
+    yggdrasil:
+      mode: static_registry
+      registry_path: &#34;/etc/polyresolver/yggdrasil-names.yaml&#34;
+      zones: [&#34;.ygg&#34;]            # pTLD — соглашение оператора, не стандарт
+    cjdns:
+      mode: delegate_external
+      upstream: null              # оператор указывает конкретный Hyperboria DNS-сервис, если таковой выбран
+      zones: [&#34;.hype&#34;]            # pTLD — соглашение сообщества, подлежит проверке на этапе эксплуатации
+    reticulum:
+      mode: announce_listener
+      registry_path: &#34;/etc/polyresolver/reticulum-names.yaml&#34;
+      zones: [&#34;.rns&#34;]
+    olsr:
+      mode: hosts_watch
+      hosts_path: &#34;/var/run/hosts_olsr&#34;
+      zones: [&#34;.olsr&#34;]
+    meshtastic:        # Фаза 4, экспериментально
+      mode: mqtt_directory
+      enabled: false
+    babel:              # Фаза 4, экспериментально
+      mode: external_bridge
+      enabled: false
+    serval:              # Фаза 4, экспериментально
+      mode: rhizome_bridge
+      enabled: false
+</code></pre>
+<hr>
+<h2>10. Децентрализованный веб и хранилища</h2>
+<h3>10.1. IPFS / IPNS / DNSLink (категория C)</h3>
+<p>Два независимых механизма человекочитаемого именования: <strong>IPNS</strong> (мутируемый указатель, адресуемый по PeerID или отдельному ключу) и <strong>DNSLink</strong> (обычная TXT-запись <code>_dnslink.&lt;имя&gt;</code>, указывающая на <code>/ipfs/&lt;CID&gt;</code> либо <code>/ipns/&lt;ключ&gt;</code>, то есть фактически делегирование через существующий DNS). Адаптер поддерживает оба пути: прямой запрос к локальной IPFS-ноде (HTTP RPC API) для IPNS и обычный DNS-запрос TXT-записи для DNSLink с последующим <code>Delegate</code>.</p>
+<h3>10.2. ZeroNet (категория C)</h3>
+<p>Адреса сайтов ZeroNet — Bitcoin-подобные адреса; плагин ZeroName связывает их с человекочитаемыми <code>.bit</code>-доменами, зарегистрированными в Namecoin с ключом <code>zeronet</code>, разрешаемым либо через прямой RPC к <code>namecoind</code>, либо через распределённый «resolver site», публикующий сопоставление в собственном <code>data/names.json</code>²⁰. Поскольку это пересекается с пространством имён <code>.bit</code>, обслуживаемым адаптером <code>ncdns</code> (раздел 7.2), конфликт разрешается политикой <strong>ТРЕБ-002</strong>: единый <code>.bit</code>-адаптер (<code>ncdns</code>) интерпретирует ключ <code>zeronet</code> внутри уже читаемой NVS-записи и возвращает <code>Structured { srKind = CryptoDestination }</code>, а не заводится отдельный конкурирующий <code>.bit</code>-authoritative-бэкенд.</p>
+<h3>10.3. Hyphanet (бывший Freenet, категория C)</h3>
+<p>Проект переименован из Freenet в Hyphanet в 2023 году²¹. Типы ключей: CHK (хэш содержимого), SSK/USK (подписанное пространство/обновляемое подписанное пространство) и <strong>KSK</strong> (Keyword Signed Key) — единственный из четырёх типов, являющийся непосредственно человекочитаемым именем (производится от произвольной строки), тогда как CHK/SSK/USK по своей природе не человекочитаемы и не являются предметом «разрешения имени» в смысле задачи ТЗ²². Адаптер обслуживает запросы вида <code>&lt;строка&gt;.freenet</code>/<code>&lt;строка&gt;.hyphanet</code> как вычисление KSK и обращение к локальной ноде по FCP (Freenet/Hyphanet Client Protocol) <code>[Не проверено]</code>: точная текущая спецификация FCP отдельно не проверялась в ходе подготовки документа и требует сверки на этапе реализации Фазы 3.</p>
+<h3>10.4. GNUnet / GNS — GNU Name System (категория D)</h3>
+<p>GNS стандартизирован как экспериментальный RFC 9498 (2023)²³. Использует зарезервированный через GANA псевдо-TLD <code>.alt</code>, в частности <code>.gns.alt</code> закреплён конкретно за GNS²⁴; базовая единица — петname-зона, которую администрирует каждый узел самостоятельно, делегируя поддомены другим зонам (в том числе чужим) без глобального единого корня по дизайну; поиск чужих записей — через распределённую DHT, локальный кэш — <code>NAMECACHE</code>/<code>NAMESTORE</code>²⁵. Экосистема GNUnet предоставляет готовый шлюзовой инструмент DNS2GNS для трансляции между классическим DNS и GNS²⁶ — адаптер <code>polyresolver</code> в режиме по умолчанию делегирует на локальный <code>gnunet-gns</code>-сервис аналогично паттерну разделов 7.1–7.4, не реализуя DHT-клиент самостоятельно в Фазе 1–2.</p>
+<pre><code class="language-yaml">adapters:
+  decentweb:
+    ipfs:
+      mode: local_api
+      api_endpoint: &#34;127.0.0.1:5001&#34;
+      zones: [&#34;.ipfs&#34;, &#34;.ipns&#34;]
+      dnslink: true
+    zeronet:
+      mode: delegated_via_ncdns     # см. 10.2 — конфликт с .bit разрешён в пользу единого адаптера
+    hyphanet:
+      mode: fcp
+      fcp_endpoint: &#34;127.0.0.1:9481&#34;   # [Не проверено]
+      zones: [&#34;.freenet&#34;, &#34;.hyphanet&#34;]
+    gns:
+      mode: delegated
+      upstream: &#34;127.0.0.1:5353&#34;       # локальный gnunet-gns/DNS2GNS, порт конфигурируется оператором
+      zones: [&#34;.alt&#34;, &#34;.gns.alt&#34;]
+</code></pre>
+<hr>
+<h2>11. Экспериментальные межсетевые даркнеты</h2>
+<h3>11.1. dn42 (категория F)</h3>
+<p>dn42 — экспериментальная децентрализованная BGP-сеть поверх туннелей (WireGuard/GRE и др.), с собственным git-реестром в стиле RIPE whois (RPSL-подобные объекты), выделенным диапазоном ASN (4242420000–4242429999 с июня 2014 г.), приватными адресными блоками IPv4/IPv6 ULA и anycast-инфраструктурой DNS: подтверждённые адреса делегирующих/рекурсивных серверов — <code>172.20.0.53</code>/<code>172.23.0.53</code> (IPv4) и <code>fd42:d42:d42:53::1</code>/<code>fd42:d42:d42:54::1</code> (IPv6) под именами <code>*.delegation-servers.dn42</code>/<code>*.recursive-servers.dn42</code>, а также anycast whois-сервис на <code>172.22.0.43</code>/<code>fd42:d42:d42:43::1</code>²⁷. Новые делегирующие серверы поддерживают DNSSEC²⁸. Адаптер — прямая пересылка <code>.dn42</code>-запросов на один или несколько сконфигурированных anycast-адресов dn42 (оператор обязан иметь сетевую связность с dn42 — туннель; сам <code>polyresolver</code> этот туннель не поднимает).</p>
+<pre><code class="language-yaml">adapters:
+  darknet:
+    dn42:
+      mode: forward
+      upstream: [&#34;172.20.0.53&#34;, &#34;172.23.0.53&#34;]   # сверить актуальный список на wiki.dn42
+      zones: [&#34;.dn42&#34;]
+      dnssec_expected: true
+</code></pre>
+<h3>11.2. anoNet (категория F, частично <code>[Не проверено]</code>)</h3>
+<p>anoNet — более старая децентрализованная friend-to-friend даркнет-сеть, построенная на BGP поверх VPN-туннелей (OpenVPN/tinc/QuickTun), с собственным приватным IPv4-блоком (21.0.0.0/8 с марта 2017 г., ранее 1.0.0.0/8)²⁹. <code>[Предположение]</code>: по наблюдаемым в источниках примерам доменных имён (<code>xmpp.ano</code>, <code>forum.ano</code>) используется псевдо-TLD <code>.ano</code>, однако, в отличие от dn42, единого структурированного git-реестра и задокументированной anycast-инфраструктуры DNS, эквивалентных dn42, в ходе подготовки документа не обнаружено — резолюция в сообществе anoNet носит более неформальный, узел-зависимый характер. Адаптер проектируется аналогично cjdns-адаптеру (9.2) — как подключаемая точка к DNS-серверу, явно указанному оператором, без встроенного предположения о конкретном сервисе.</p>
+<pre><code class="language-yaml">adapters:
+  darknet:
+    anonet:
+      mode: delegate_external
+      upstream: null       # оператор указывает конкретный DNS-кэширующий узел своего сообщества anoNet
+      zones: [&#34;.ano&#34;]        # [Предположение]
+</code></pre>
+<hr>
+<h2>12. Фильтрация и репутация</h2>
+<h3>12.1. DNSBL (категория G)</h3>
+<p>Классический паттерн: зона вида <code>&lt;реверс-или-хэш-индикатора&gt;.&lt;зона-списка&gt;</code> возвращает отличный от <code>NXDOMAIN</code> ответ, если индикатор присутствует в списке. Архитектурно DNSBL — <strong>не резолвер в смысле раздела 6</strong>, а middleware-фильтр, встраиваемый в конвейер (шаг 4–6 раздела 5.4) до или после основной резолюции: запрещающее/разрешающее решение, а не ответ на вопрос «чему равен этот адрес».</p>
+<h3>12.2. DRBL (категория G, <code>[Не проверено]</code>)</h3>
+<p>В ходе подготовки документа не обнаружено общепринятого, однозначного расшифрования аббревиатуры «DRBL» в контексте систем разрешения/фильтрации имён, непосредственно примыкающего по смыслу к DNSBL в перечислении задания. <code>[Предположение]</code>: по аналогии с DNSBL и по месту в перечислении (сразу после DNSBL, в списке систем именования/фильтрации, а не инструментов диагностики) наиболее вероятная трактовка — некоторый <strong>распределённый/децентрализованный аналог репутационного чёрного списка</strong> (Distributed/Decentralized Reputation Block List), архитектурно идентичный DNSBL по точке встраивания в конвейер, но с хранилищем на основе DHT/распределённого реестра хэшей вместо централизованной DNS-зоны. Эта трактовка <strong>не подтверждена</strong> и зафиксирована как открытый вопрос, требующий уточнения у заказчика перед реализацией (раздел 23).</p>
+<pre><code class="language-yaml">filters:
+  dnsbl:
+    enabled: true
+    zones: [&#34;zen.spamhaus.org&#34;]   # пример; список — на усмотрение оператора
+    mode: pre_resolve
+  drbl:                            # [Не проверено] — см. 12.2, требует уточнения смысла перед включением
+    enabled: false
+</code></pre>
+<hr>
+<h2>13. Прочие/неоднозначные позиции</h2>
+<h3>13.1. Lantern</h3>
+<p>Lantern — инструмент обхода блокировок/прокси (категория H), <strong>не являющийся</strong> системой разрешения имён. В перечне задания он соседствует с системами именования, но по функции относится к транспортному уровню. Рекомендация: не реализовывать как <code>Resolver</code>-адаптер вовсе, а предоставить его как опциональный исходящий транспорт для HTTP/RPC-вызовов прочих адаптеров (например, ENS-адаптер может быть сконфигурирован на обращение к Ethereum-RPC через Lantern-прокси в условиях сетевой цензуры) — архитектурно это параметр транспортного слоя конкретного адаптера, а не отдельная запись в таблице маршрутизации namespace.</p>
+<h3>13.2. Calypso (категория I, <code>[Не проверено]</code>)</h3>
+<p>В ходе целевого поиска в контексте «системы именования/разрешения доменов» обнаружены два проекта с названием «Calypso», ни один из которых не является системой разрешения имён:</p>
+<ol>
+<li>академическая система CALYPSO (DEDIS/EPFL, Kokoris-Kogias и соавт.) — фреймворк аудируемого контроля доступа к зашифрованным данным на распределённых реестрах (конфиденциальность/целостность/доступность приватных данных), не связанный с DNS-подобной резолюцией³⁰;</li>
+<li>коммерческий проект «Calypso Network» — платформа для создания токенов, также не являющаяся системой именования³¹.</li>
+</ol>
+<p><strong>Я не могу подтвердить</strong>, что название «Calypso» в перечне задания относится к системе разрешения имён, сопоставимой по функции с остальными 23 пунктами списка. Адаптер для Calypso в настоящем ТЗ <strong>не специфицируется предметно</strong> — зарезервирована заглушка в таксономии (раздел 3, категория I) и в реестре конфигурации, подключение откладывается до уточнения у разработчика, какая именно система имеется в виду (раздел 23).</p>
+<pre><code class="language-yaml">adapters:
+  unidentified:
+    calypso:
+      enabled: false     # заглушка; требует уточнения референта, см. раздел 13.2
+</code></pre>
+<hr>
+<h2>14. STM-кэш</h2>
+<h3>14.1. Структура</h3>
+<p><code>[Вывод]</code>: шардирование — перенос паттерна, использованного в <code>Surypus</code> для событийной шины на <code>STM TChan</code>, адаптированный под задачу кэша; архитектурное предложение, не факт о существующей системе.</p>
+<pre><code class="language-haskell">-- Шардирование по хэшу ключа снижает конкуренцию STM-транзакций
+-- под высокой параллельной нагрузкой (N шардов, степень двойки)
+
+newtype CacheKey = CacheKey (DNS.Domain, DNS.TYPE, AdapterId)
+
+data CacheEntry = CacheEntry
+  { ceResult     :: ResolveResult
+  , ceInsertedAt :: UTCTime
+  , ceTTL        :: NominalDiffTime
+  , ceSource     :: AdapterId
+  , ceNegative   :: Bool             -- отрицательное кэширование (NotFound)
+  }
+
+data CacheShard = CacheShard (TVar (HashMap CacheKey CacheEntry))
+
+data Cache = Cache
+  { cacheShards    :: Vector CacheShard          -- 2^k шардов
+  , cacheInFlight  :: TVar (HashMap CacheKey (TMVar (Either ResolveError ResolveResult)))
+                                                   -- singleflight-дедупликация (14.3)
+  , cacheMaxEntries :: Int
+  }
+</code></pre>
+<h3>14.2. Политика вытеснения и TTL</h3>
+<ul>
+<li>ленивое истечение по TTL при чтении + периодический поток-«подметальщик» (под надзором supervisor tree, раздел 5.3), удаляющий просроченные записи пакетно по шардам;</li>
+<li>дополнительный верхний предел числа записей (LRU-подобное вытеснение сверх TTL-истечения) для ограничения памяти;</li>
+<li>отрицательное кэширование (<code>ceNegative = True</code>) с отдельным, как правило более коротким TTL — предотвращает повторные дорогостоящие обращения к медленным бэкендам (блокчейн-RPC, mesh) при <code>NotFound</code>;</li>
+<li>адаптивная поправка TTL: TTL, заявленный бэкендом, ограничивается сверху и снизу конфигурируемыми границами (<code>min_ttl</code>/<code>max_ttl</code>) — специфично важно для адаптеров категории B/E, где исходная система может не предоставлять осмысленного TTL вовсе (например, Reticulum-petname, раздел 9.3), и значение по умолчанию назначается политикой конфигурации, а не бэкендом;</li>
+<li>персистентный кэш (SQLite/LMDB) как опциональное усиление Фазы 3+ для сохранения «тёплого» состояния между перезапусками процесса — не входит в базовый объём Фазы 0–2, зафиксирован как явный открытый пункт дорожной карты (раздел 21).</li>
+</ul>
+<h3>14.3. Дедупликация одновременных запросов (singleflight)</h3>
+<p>При промахе кэша для ключа, уже находящегося «в полёте» (конкурентный идентичный запрос уже отправлен в адаптер), последующие запросы <strong>ДОЛЖНЫ</strong> ожидать результата первого через <code>TMVar</code> в <code>cacheInFlight</code>, а не инициировать повторный вызов адаптера — предотвращает «громовое стадо» (thundering herd) на дорогостоящие бэкенды (блокчейн-RPC, mesh с большим RTT) при одновременном поступлении множества запросов к одному и тому же непопулярному имени сразу после истечения TTL.</p>
+<hr>
+<h2>15. Конфигурация (YAML)</h2>
+<h3>15.1. Принципы</h3>
+<ul>
+<li>декларативность: типовые сценарии не требуют перекомпиляции (ТРЕБ-014);</li>
+<li><code>include</code> для разбиения на файлы по адаптерам (примеры разделов 7–13 — фрагменты именно такой структуры);</li>
+<li>override через переменные окружения для секретов (ТРЕБ-032);</li>
+<li>hot-reload: изменение файла конфигурации перечитывается без перезапуска процесса для всех разделов, не требующих пересоздания сетевых listener'ов; для изменений listener'ов (порт/адрес) — явный управляемый restart через <code>polyresolverctl reload --listeners</code>.</li>
+<li><code>[Предположение]</code>: формальная JSON Schema конфигурации и версионированные миграции между версиями схемы — часть Protocol Specification (раздел 22), не разворачивается полностью в этом документе, чтобы не дублировать содержимое companion-документа.</li>
+</ul>
+<h3>15.2. Сводный пример</h3>
+<pre><code class="language-yaml"># /etc/polyresolver/polyresolver.yaml
+
+listeners:
+  dns:
+    - { transport: udp, address: &#34;127.0.0.1&#34;, port: 5300 }   # polyresolver-core слушает позади dnsdist
+    - { transport: tcp, address: &#34;127.0.0.1&#34;, port: 5300 }
+  api:
+    address: &#34;127.0.0.1&#34;
+    port: 8080
+
+edge:
+  dnsdist:
+    enabled: true
+    public_binds:
+      - { transport: do53, address: &#34;0.0.0.0&#34;, port: 53 }
+      - { transport: dot,  address: &#34;0.0.0.0&#34;, port: 853, cert: &#34;/etc/polyresolver/tls/fullchain.pem&#34;, key: &#34;/etc/polyresolver/tls/privkey.pem&#34; }
+      - { transport: doh,  address: &#34;0.0.0.0&#34;, port: 443, cert: &#34;/etc/polyresolver/tls/fullchain.pem&#34;, key: &#34;/etc/polyresolver/tls/privkey.pem&#34;, path: &#34;/dns-query&#34; }
+    acl: [&#34;127.0.0.0/8&#34;, &#34;10.0.0.0/8&#34;, &#34;192.168.0.0/16&#34;]   # ТРЕБ-030/031; расширяется явно
+    rate_limit_qps_per_ip: 100
+
+views:
+  default:
+    acl: [&#34;0.0.0.0/0&#34;]
+    native_root_adapters: []          # ТРЕБ-005: по умолчанию пусто
+  trusted-operators:
+    acl: [&#34;10.0.0.0/8&#34;]
+    native_root_adapters: [&#34;hsd&#34;]
+
+routing:
+  conflict_policy: explicit            # ТРЕБ-002: явная политика обязательна при пересечении суффиксов
+  conflicts:
+    - { suffix: &#34;.bit&#34;, winner: &#34;ncdns&#34;, reason: &#34;единственный authoritative-источник для .bit (ТРЕБ-001)&#34; }
+
+cache:
+  shards: 64
+  max_entries: 2000000
+  default_ttl_s: 300
+  min_ttl_s: 5
+  max_ttl_s: 86400
+  negative_ttl_s: 30
+
+include:
+  - &#34;adapters/unbound.yaml&#34;
+  - &#34;adapters/ncdns.yaml&#34;
+  - &#34;adapters/emerdns.yaml&#34;
+  - &#34;adapters/hsd.yaml&#34;
+  - &#34;adapters/ens.yaml&#34;
+  - &#34;adapters/tor.yaml&#34;
+  - &#34;adapters/i2p.yaml&#34;
+  - &#34;adapters/mesh.yaml&#34;
+  - &#34;adapters/decentweb.yaml&#34;
+  - &#34;adapters/darknet.yaml&#34;
+  - &#34;adapters/filters.yaml&#34;
+
+metrics:
+  prometheus:
+    enabled: true
+    address: &#34;127.0.0.1&#34;
+    port: 9153
+
+logging:
+  format: json
+  level: info
+
+secrets:
+  ethereum_rpc_api_key_file: &#34;/run/credentials/polyresolver.service/ens-rpc-key&#34;  # systemd credentials, ТРЕБ-032
+</code></pre>
+<hr>
+<h2>16. Backend API (Servant)</h2>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/resolve/{name}?type=A</code></td>
+<td>Прямое разрешение через HTTP/JSON, минуя DNS-клиента (Ц6)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/resolve/{name}/graph</code></td>
+<td><code>ResolutionGraph</code> для диагностики цепочки делегирований (ТРЕБ-018)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/cache</code></td>
+<td>Листинг/статистика кэша</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/v1/cache/{name}</code></td>
+<td>Принудительная инвалидация записи (ТРЕБ-013)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/adapters</code></td>
+<td>Список адаптеров + <code>HealthStatus</code> каждого</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/adapters/{name}/health</code></td>
+<td>Health-check конкретного адаптера</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/v1/adapters/{name}/reload</code></td>
+<td>Горячая перезагрузка конфигурации адаптера</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/healthz</code></td>
+<td>Liveness/readiness для systemd/оркестратора</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/metrics</code></td>
+<td>Экспозиция Prometheus (раздел 17)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<pre><code class="language-haskell">type PolyresolverAPI =
+       &#34;v1&#34; :&gt; &#34;resolve&#34; :&gt; Capture &#34;name&#34; Text :&gt; QueryParam &#34;type&#34; Text :&gt; Get &#39;[JSON] ResolveResponse
+  :&lt;|&gt; &#34;v1&#34; :&gt; &#34;resolve&#34; :&gt; Capture &#34;name&#34; Text :&gt; &#34;graph&#34; :&gt; Get &#39;[JSON] ResolutionGraph
+  :&lt;|&gt; &#34;v1&#34; :&gt; &#34;cache&#34; :&gt; Get &#39;[JSON] CacheStats
+  :&lt;|&gt; &#34;v1&#34; :&gt; &#34;cache&#34; :&gt; Capture &#34;name&#34; Text :&gt; DeleteNoContent
+  :&lt;|&gt; &#34;v1&#34; :&gt; &#34;adapters&#34; :&gt; Get &#39;[JSON] [AdapterStatus]
+  :&lt;|&gt; &#34;v1&#34; :&gt; &#34;adapters&#34; :&gt; Capture &#34;name&#34; Text :&gt; &#34;health&#34; :&gt; Get &#39;[JSON] HealthStatus
+  :&lt;|&gt; &#34;v1&#34; :&gt; &#34;adapters&#34; :&gt; Capture &#34;name&#34; Text :&gt; &#34;reload&#34; :&gt; PostNoContent
+  :&lt;|&gt; &#34;healthz&#34; :&gt; Get &#39;[JSON] NoContent
+  :&lt;|&gt; &#34;metrics&#34; :&gt; Raw     -- wai-middleware-prometheus
+</code></pre>
+<p><code>[Предположение]</code>: формальная OpenAPI-схема (через <code>servant-swagger</code>) — часть Protocol Specification (раздел 22), не разворачивается здесь полностью.</p>
+<hr>
+<h2>17. Метрики Prometheus</h2>
+<p>Экосистема Haskell-клиентов Prometheus представлена как минимум двумя независимыми семействами пакетов: <code>prometheus-client</code>/<code>prometheus-metrics-ghc</code>/<code>wai-middleware-prometheus</code> (с готовой WAI-интеграцией, естественно сочетающейся со Servant-приложением, которое само исполняется поверх WAI) и альтернативный пакет <code>prometheus</code> (<code>System.Metrics.Prometheus.*</code>, типобезопасный, на основе монады-трансформера <code>RegistryT</code>)³². Для <code>polyresolver</code> рекомендуется первое семейство — именно из-за готовой WAI-интеграции, устраняющей необходимость вручную монтировать <code>/metrics</code>-эндпоинт.</p>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Метрика</th>
+<th>Тип</th>
+<th>Labels</th>
+<th>Смысл</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>polyresolver_queries_total</code></td>
+<td>Counter</td>
+<td><code>adapter, zone, result</code></td>
+<td>Запросы по адаптеру/зоне/исходу (<code>classic/structured/delegate/notfound/error</code>)</td>
+</tr>
+<tr>
+<td><code>polyresolver_cache_hits_total</code> / <code>polyresolver_cache_misses_total</code></td>
+<td>Counter</td>
+<td><code>adapter</code></td>
+<td>Эффективность кэша (сравнить с $h$ из раздела 4.5)</td>
+</tr>
+<tr>
+<td><code>polyresolver_adapter_latency_seconds</code></td>
+<td>Histogram</td>
+<td><code>adapter</code></td>
+<td>Задержка вызова адаптера</td>
+</tr>
+<tr>
+<td><code>polyresolver_adapter_up</code></td>
+<td>Gauge</td>
+<td><code>adapter</code></td>
+<td>1/0 — согласовано с <code>HealthStatus</code></td>
+</tr>
+<tr>
+<td><code>polyresolver_adapter_restarts_total</code></td>
+<td>Counter</td>
+<td><code>adapter</code></td>
+<td>Перезапуски supervisor-поддерева (раздел 5.3)</td>
+</tr>
+<tr>
+<td><code>polyresolver_cache_entries</code></td>
+<td>Gauge</td>
+<td><code>shard</code></td>
+<td>Текущий размер кэша</td>
+</tr>
+<tr>
+<td><code>polyresolver_dns_errors_total</code></td>
+<td>Counter</td>
+<td><code>rcode</code></td>
+<td>Ошибки по коду ответа DNS</td>
+</tr>
+<tr>
+<td><code>polyresolver_resolution_graph_depth</code></td>
+<td>Histogram</td>
+<td>—</td>
+<td>Глубина цепочки делегирований (диагностика ТРЕБ-018)</td>
+</tr>
+<tr>
+<td><code>polyresolver_resolution_graph_cycles_total</code></td>
+<td>Counter</td>
+<td><code>adapter_pair</code></td>
+<td>Обнаруженные и прерванные циклы делегирования</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>[Предположение]</code>: распределённая трассировка через OpenTelemetry (упомянута в ТРЕБ-017 как <code>MAY</code>, Фаза 3+) не детализируется набором конкретных span-имён в этом документе — откладывается до момента реализации, когда станет ясна фактическая топология межадаптерных вызовов.</p>
+<hr>
+<h2>18. Развёртывание</h2>
+<h3>18.1. Cabal</h3>
+<p><code>cabal.project</code>, перечисляющий все пакеты раздела 5.2 как <code>packages:</code>; единая политика версий зависимостей через <code>cabal.project.freeze</code> для воспроизводимых сборок.</p>
+<h3>18.2. Nix Flake</h3>
+<pre><code class="language-nix">{
+  description = &#34;polyresolver — universal DNS-compatible name resolver&#34;;
+  outputs = { self, nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let pkgs = nixpkgs.legacyPackages.${system}; in {
+        packages.polyresolver = pkgs.haskellPackages.callCabal2nix &#34;polyresolver&#34; ./. {};
+        devShells.default = pkgs.mkShell {
+          inputsFrom = [ self.packages.${system}.polyresolver ];
+          buildInputs = [ pkgs.cabal-install pkgs.haskell-language-server pkgs.unbound ];
+        };
+      }) // {
+        nixosModules.polyresolver = { config, lib, pkgs, ... }: {
+          options.services.polyresolver = {
+            enable = lib.mkEnableOption &#34;polyresolver&#34;;
+            configFile = lib.mkOption { type = lib.types.path; };
+            adapters = lib.mkOption {
+              type = lib.types.attrsOf lib.types.bool;
+              default = {};
+              description = &#34;Декларативное включение/выключение адаптеров (разделы 7–13)&#34;;
+            };
+          };
+          config = lib.mkIf config.services.polyresolver.enable {
+            systemd.services.polyresolver = {
+              wantedBy = [ &#34;multi-user.target&#34; ];
+              serviceConfig = {
+                ExecStart = &#34;${self.packages.${system}.polyresolver}/bin/polyresolver-server --config ${config.services.polyresolver.configFile}&#34;;
+                DynamicUser = true;
+                AmbientCapabilities = [ &#34;CAP_NET_BIND_SERVICE&#34; ];   # только если порт 53 не проброшен через dnsdist
+                ProtectSystem = &#34;strict&#34;;
+                ProtectHome = true;
+                NoNewPrivileges = true;
+                RestrictSUIDSGID = true;
+                MemoryDenyWriteExecute = true;
+              };
+            };
+          };
+        };
+      };
+}
+</code></pre>
+<h3>18.3. Guix</h3>
+<pre><code class="language-scheme">(define-public polyresolver
+  (package
+    (name &#34;polyresolver&#34;)
+    (version &#34;0.1.0&#34;)
+    (source (local-file &#34;.&#34; &#34;polyresolver-checkout&#34; #:recursive? #t))
+    (build-system haskell-build-system)
+    (inputs (list unbound))
+    (native-inputs (list ghc cabal-install))
+    (synopsis &#34;Универсальный DNS-совместимый резолвер альтернативных пространств имён&#34;)
+    (description &#34;polyresolver маршрутизирует DNS-запросы к Handshake, ENS,
+EmerDNS, Namecoin/ncdns, Tor, I2P и другим системам именования через
+типизированные адаптеры с единым STM-кэшем и Prometheus-метриками.&#34;)
+    (home-page &#34;https://example.invalid/polyresolver&#34;)
+    (license license:mpl2.0)))   ; [Вывод]: лицензия по аналогии с Surypus, предложение, не зафиксированное требование
+</code></pre>
+<h3>18.4. systemd-юниты</h3>
+<p>Основной демон + по сайдкар-юниту на внешние зависимости, не входящие в код <code>polyresolver</code> (сами демоны <code>ncdns</code>, <code>hsd</code>/<code>hnsd</code>, Ethereum-нода и т.д. — отдельные, независимо сопровождаемые проекты, запускаемые собственными юнитами с <code>After=</code>/<code>Requires=</code> от <code>polyresolver.service</code> при необходимости строгой очерёдности запуска).</p>
+<pre><code class="language-ini"># /etc/systemd/system/polyresolver.service
+[Unit]
+Description=polyresolver — universal name resolver
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/polyresolver-server --config /etc/polyresolver/polyresolver.yaml
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictSUIDSGID=yes
+MemoryDenyWriteExecute=yes
+AmbientCapabilities=        # пусто при использовании dnsdist/socket activation для порта 53
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<hr>
+<h2>19. Требования безопасности (детализация раздела 4.4)</h2>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Угроза</th>
+<th>Мера</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Открытый резолвер / amplification-атака</td>
+<td>ACL на edge-слое (<code>dnsdist</code>, по умолчанию RFC 1918), rate-limiting по IP (ТРЕБ-030/031, раздел 5.1)</td>
+</tr>
+<tr>
+<td>Cache poisoning через скомпрометированный адаптер</td>
+<td>Изоляция supervisor-поддерева на адаптер (ТРЕБ-020/022); для адаптеров с DNSSEC-способностью источника (<code>ncdns</code>, <code>hsd</code>/<code>hnsd</code>) — передача DNSSEC-статуса дальше по конвейеру, а не отбрасывание</td>
+</tr>
+<tr>
+<td>Подделка offchain-ответа ENS (CCIP-Read)</td>
+<td>Верификация подписи ответа шлюза согласно EIP-3668 перед принятием <code>Structured</code>-результата</td>
+</tr>
+<tr>
+<td>Утечка RPC-доступа внешних демонов</td>
+<td>Loopback/Unix-сокет (ТРЕБ-030), секреты — через <code>systemd credentials</code>/файлы с ограниченными правами (ТРЕБ-032)</td>
+</tr>
+<tr>
+<td>Компрометация процесса плагина (раздел 6.5)</td>
+<td>Процессная изоляция, собственный systemd sandboxing-профиль, capability negotiation на подключении</td>
+</tr>
+<tr>
+<td>DNS hijacking через ошибочное включение native-root</td>
+<td>ТРЕБ-005: native-root по умолчанию выключен, включается только явно сконфигурированному view</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>[Предположение]</code>: более глубокая песочница на уровне ОС (seccomp-профили, Capsicum/<code>pledge</code>-<code>unveil</code> на BSD-платформах, интеграция с аппаратными HSM/TPM для хранения ключей RPC-доступа) зафиксирована как предмет отдельного companion-документа Security Model (раздел 22) — перечисление конкретных seccomp-правил без привязки к финальной реализации системных вызовов было бы преждевременной и непроверяемой детализацией на уровне настоящего ТЗ.</p>
+<hr>
+<h2>20. Тестирование</h2>
+<h3>20.1. Уровни</h3>
+<ul>
+<li><strong>unit</strong> (<code>hspec</code>/<code>tasty</code>) — чистая логика маршрутизации, парсинг конфигурации;</li>
+<li><strong>property-based</strong> (<code>Hedgehog</code>/<code>QuickCheck</code>) — инварианты кэша (TTL-монотонность, singleflight-корректность), инвариант <code>detectCycle</code> (раздел 6.4), корректность longest-suffix-match маршрутизации на сгенерированных конфигурациях;</li>
+<li><strong>stateful/state-machine testing</strong> — через модельное тестирование <code>Hedgehog</code> жизненного цикла кэша, hot-reload конфигурации, перезапуска supervisor-поддерева;</li>
+<li><strong>concurrency testing</strong> — <code>[Предположение]</code>: для детерминированной проверки STM-кода на отсутствие deadlock/race рекомендуется библиотека Déjà Fu (детерминированное тестирование конкурентности для Haskell); конкретная глубина интеграции — предмет оценки на этапе реализации, не зафиксирована как гарантированный факт о применимости к финальному коду;</li>
+<li><strong>golden-тесты</strong> DNS wire-кодирования через <code>dnsext</code>;</li>
+<li><strong>integration</strong> — против regtest/testnet-инстансов внешних систем (Namecoin regtest, Handshake regtest, Ethereum devnet через <code>anvil</code>/<code>hardhat</code>), где такие тестовые режимы существуют;</li>
+<li><strong>interoperability</strong> — проверка ответов стандартными клиентами (<code>dig</code>, <code>kdig</code>, <code>drill</code>, <code>delv</code>, <code>host</code>, резолверы <code>glibc</code>/<code>musl</code>) для гарантии wire-совместимости;</li>
+<li><strong>fuzzing</strong> — для DNS-парсера (<code>dnsext</code>-уровень) и границ разбора ответов внешних RPC;</li>
+<li><strong>нагрузочное тестирование</strong> — для проверки ориентира задержки из раздела 4.5 (<code>dnsperf</code>/<code>queryperf</code>-подобные инструменты).</li>
+</ul>
+<h3>20.2. Пример property-инварианта</h3>
+<p>Для <code>detectCycle</code> (раздел 6.4): для любой конечной конфигурации адаптеров $A$ и любой сгенерированной последовательности <code>Delegate</code>-переходов резолюция завершается за число шагов $\le |A|$. Формализация через <code>Hedgehog</code>-генератор случайных конфигураций маршрутизации с искусственно внедрёнными циклическими <code>Delegate</code>-ответами — явный regression-тест против регресса ТРЕБ-018.</p>
+<h3>20.3. Conformance-матрица</h3>
+<p><code>[Предположение]</code>: для нормативных требований раздела 4 (и аналогичных по всему документу) рекомендуется построение машиночитаемого реестра <code>requirements.yaml</code> вида:</p>
+<pre><code class="language-yaml">requirements:
+  TREB-001:
+    keyword: MUST
+    text: &#34;Каждое пространство имён должно иметь ровно один authoritative-адаптер&#34;
+    test: TC-ROUTING-001
+  TREB-006:
+    keyword: MUST_NOT
+    text: &#34;Адаптер не должен синтезировать A/AAAA без семантического эквивалента&#34;
+    test: TC-ENS-002
+</code></pre>
+<p>с последующей автогенерацией отчёта трассируемости «требование → тест → статус». Это организационная рекомендация, оформляемая как отдельный раздел Developer Guide (раздел 22), а не часть обязательной поставки Фазы 0–1.</p>
+<hr>
+<h2>21. Этапы разработки (дорожная карта)</h2>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Фаза</th>
+<th>Содержание</th>
+<th>Критерий готовности (DoD, ориентировочно)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0</strong></td>
+<td><code>polyresolver-types</code>, <code>polyresolver-core</code> (routing + STM-кэш + supervisor tree), <code>polyresolver-dns</code> поверх <code>dnsext</code>, Unbound-адаптер (делегированный режим), базовая YAML-конфигурация, минимальный backend API, Prometheus-экспорт</td>
+<td>Корректная обработка обычного ICANN-трафика наравне с «просто рекурсивным резолвером»; property-тесты кэша и маршрутизации проходят</td>
+</tr>
+<tr>
+<td><strong>1</strong></td>
+<td>«Готовые» адаптеры: <code>ncdns</code>, EmerDNS, <code>hsd</code>/<code>hnsd</code>, ENS (разделы 7.2–7.5), edge-слой <code>dnsdist</code></td>
+<td>ТРЕБ-001–006 выполняются для всех пяти адаптеров Фазы 0–1; conformance-тесты по ключевым <code>MUST</code> зелёные</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td>Tor, I2P/i2pd, IPFS/IPNS+DNSLink, DNSBL; Plugin SDK (выбор между Cap'n Proto/gRPC после spike, раздел 6.5)</td>
+<td>Внепроцессный адаптер подключается без изменения ядра (ТРЕБ-012)</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td>GNUnet/GNS, Reticulum, OLSR, ZeroNet (через существующий <code>.bit</code>-адаптер), Hyphanet; OpenTelemetry-трассировка (MAY); персистентный кэш</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>4 (экспериментальная)</strong></td>
+<td>Yggdrasil, cjdns (подключаемая точка), dn42, anoNet (подключаемая точка), Meshtastic, Babel, Serval, DRBL (по уточнении смысла), Lantern (как транспорт), Calypso (по уточнении референта)</td>
+<td>Явно маркируется как «экспериментальная» в конфигурации (<code>enabled: false</code> по умолчанию) до отдельной валидации каждого протокола</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Стабильность публичного API (<code>polyresolver-types</code>, Servant-эндпоинты) фиксируется с версии 1.0; до неё допускаются breaking changes между минорными версиями по решению разработчика.</p>
+<hr>
+<h2>22. Рекомендованный состав сопутствующих документов</h2>
+<p>Настоящий документ сознательно объединяет уровни Vision, SRS (функциональные/нефункциональные требования) и SAD (архитектура) — это осознанный компромисс между полнотой и управляемостью объёма одного файла. Дальнейшая детализация, упомянутая в расширенном контексте задачи (полная ABI-спецификация Plugin SDK, формальная модель угроз, протокол IPC, пользовательские руководства, матрица совместимости ОС/архитектур/версий GHC, CI/CD и релизная политика, Web UI, HA/Raft-кластеризация, per-RFC conformance-пакеты), по объёму и характеру работы заслуживает оформления как самостоятельные документы, а не разделов этого ТЗ:</p>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Документ</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Plugin SDK Specification</strong></td>
+<td>Полный ABI, версия протокола, capability negotiation, справочник для авторов сторонних адаптеров</td>
+</tr>
+<tr>
+<td><strong>Protocol Specification</strong></td>
+<td>Формальная OpenAPI/JSON Schema, схема конфигурации с миграциями, формат <code>ResolutionGraph</code> для внешних потребителей</td>
+</tr>
+<tr>
+<td><strong>Security Model</strong></td>
+<td>Модель угроз по каждому адаптеру, seccomp/<code>pledge</code>/Capsicum-профили, управление секретами/HSM</td>
+</tr>
+<tr>
+<td><strong>Developer Guide</strong></td>
+<td>Haddock, структура репозитория, процесс добавления адаптера, conformance-реестр требований</td>
+</tr>
+<tr>
+<td><strong>Administrator Guide / Operations Manual</strong></td>
+<td>Эксплуатация, резервное копирование состояния кэша, обновление, мониторинг, runbook-и инцидентов</td>
+</tr>
+<tr>
+<td><strong>RFC/ADR Repository</strong></td>
+<td>Архитектурные решения и их обоснование по мере развития проекта</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Это разделение прямо соответствует рекомендации, уже сформулированной в предоставленном пользователем фрагменте связанного обсуждения, и принимается как согласованное проектное решение.</p>
+<hr>
+<h2>23. Риски и открытые вопросы</h2>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>№</th>
+<th>Вопрос/риск</th>
+<th>Статус</th>
+<th>Предлагаемое действие</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Референт «Calypso» не идентифицирован (раздел 13.2)</td>
+<td><code>[Не проверено]</code></td>
+<td>Уточнить у разработчика перед реализацией Фазы 4</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Семантика «DRBL» не подтверждена (раздел 12.2)</td>
+<td><code>[Не проверено]</code></td>
+<td>Уточнить у разработчика перед реализацией Фазы 4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Отсутствие канонического DNS-решения для cjdns/Hyperboria (9.2) и неформальность DNS в anoNet (11.2)</td>
+<td><code>[Не проверено]</code>, вероятно нестабильно</td>
+<td>Адаптеры спроектированы как «подключаемая точка» без встроенного предположения о конкретном сервисе — риск снижен архитектурно</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Точный порт <code>hsd</code> recursive-сервера различается между основным репозиторием и форками (5349/5350 против 15359/15360, раздел 7.4)</td>
+<td><code>[Не проверено]</code></td>
+<td>Проверять по факту разворачиваемой версии при конфигурировании, не жёстко кодировать</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Выбор IPC для Plugin SDK (Cap'n Proto vs gRPC, раздел 6.5)</td>
+<td>Открыт</td>
+<td>Короткий технический spike в начале Фазы 2</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Протоколы Meshtastic/Babel/Serval не детализированы на уровне, достаточном для реализации (раздел 9.5–9.7)</td>
+<td><code>[Не проверено]</code></td>
+<td>Отдельная протокольная валидация перед Фазой 4, вне объёма данного ТЗ</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Содержимое исходной ссылки на обсуждение недоступно напрямую (см. преамбулу)</td>
+<td><code>[Не проверено]</code></td>
+<td>Учтены только фрагменты, явно переданные пользователем текстом в диалоге</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2>24. Заключение</h2>
+<p><code>polyresolver</code> специфицирован как трёхуровневая система (edge/<code>dnsdist</code> → routing-core на STM-акторах с supervisor tree → типизированные адаптеры) с центральным инвариантом «одно пространство имён → один authoritative-бэкенд» и типизированным результатом резолюции (<code>Classic</code>/<code>Structured</code>/<code>Delegate</code>/<code>NotFound</code>/<code>TemporarilyUnavailable</code>), не допускающим фабрикации DNS-семантики там, где исходная система её не предоставляет. Пять «готовых» адаптеров (Unbound, <code>ncdns</code>, EmerDNS, <code>hsd</code>, ENS) специфицированы в деталях, достаточных для начала реализации Фазы 0–1; оставшиеся 19 систем задания классифицированы по девятикатегорийной таксономии моделей именования и получили архитектурно обоснованную, но не исчерпывающую протокольную спецификацию, с явным выделением двух неразрешённых референтов (Calypso, DRBL) и нескольких позиций с нестабильной или неформальной экосистемой (cjdns/Hyperboria, anoNet, Meshtastic, Babel, Serval). Дальнейшая детализация вынесена в рекомендованный набор сопутствующих документов (раздел 22) — это осознанное инженерное решение, предотвращающее превращение ТЗ в неуправляемый мегадокумент ценой полноты в рамках одного файла.</p>
+<hr>
+<h2>Приложение А. Расширенный глоссарий</h2>
+<div class="md-table" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Термин</th>
+<th>Пояснение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ABI</td>
+<td>Application Binary Interface — здесь: версионируемый бинарный контракт Plugin SDK (раздел 6.5)</td>
+</tr>
+<tr>
+<td>ACL</td>
+<td>Access Control List — список разрешённых источников трафика</td>
+</tr>
+<tr>
+<td>CCIP-Read</td>
+<td>EIP-3668, механизм offchain-данных для смарт-контрактов, используется ENS</td>
+</tr>
+<tr>
+<td>CHK / SSK / USK / KSK</td>
+<td>Типы ключей Hyphanet: Content Hash Key, Signed Subspace Key, Updatable Subspace Key, Keyword Signed Key (раздел 10.3)</td>
+</tr>
+<tr>
+<td>DNSLink</td>
+<td>Механизм связывания обычного DNS-имени с IPFS/IPNS через TXT-запись <code>_dnslink.&lt;имя&gt;</code></td>
+</tr>
+<tr>
+<td>DoH / DoT / DoQ / DoH3</td>
+<td>DNS over HTTPS / TLS / QUIC / HTTP-3</td>
+</tr>
+<tr>
+<td>ENSIP-10</td>
+<td>Стандарт wildcard-резолюции поддоменов в ENS</td>
+</tr>
+<tr>
+<td>FCP</td>
+<td>Freenet/Hyphanet Client Protocol <code>[Не проверено]</code></td>
+</tr>
+<tr>
+<td>GNS</td>
+<td>GNU Name System, часть GNUnet, стандартизирован как RFC 9498</td>
+</tr>
+<tr>
+<td>IR</td>
+<td>Intermediate Representation — здесь: <code>ResolutionGraph</code> (раздел 6.4)</td>
+</tr>
+<tr>
+<td>NVS</td>
+<td>Name-Value Storage, сервис Emercoin</td>
+</tr>
+<tr>
+<td>pTLD</td>
+<td>Pseudo-TLD</td>
+</tr>
+<tr>
+<td>RNS</td>
+<td>Reticulum Network Stack</td>
+</tr>
+<tr>
+<td>RPSL</td>
+<td>Routing Policy Specification Language — формат объектов whois-реестра (использован в dn42)</td>
+</tr>
+<tr>
+<td>SAM</td>
+<td>Simple Anonymous Messaging, локальный API I2P</td>
+</tr>
+<tr>
+<td>SID</td>
+<td>Subscriber ID, адрес в Serval Mesh <code>[Не проверено]</code></td>
+</tr>
+<tr>
+<td>singleflight</td>
+<td>Паттерн дедупликации конкурентных идентичных запросов к одному ключу (раздел 14.3)</td>
+</tr>
+<tr>
+<td>TTL</td>
+<td>Time To Live</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2>Приложение Б. Список источников</h2>
+<p>Нумерация соответствует надстрочным ссылкам по тексту документа. Все источники просмотрены (web-поиск и/или получение страницы) в ходе подготовки документа; при отсутствии независимой проверки факт помечен в тексте эпистемическим маркером и источник не приводится либо приводится с явной оговоркой.</p>
+<ol>
+<li>Unbound — документация конфигурации (упомянута в переданном пользователем фрагменте связанного обсуждения): <code>https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html</code></li>
+<li>dnsdist — техническая документация, раздел ACL: <code>https://studylib.net/doc/26185705/dnsdist=feb2023</code> ; PDF-документация: <code>https://www.dnsdist.org/dnsdist.pdf</code></li>
+<li>dnsdist — поддержка DoT/DoH/DoQ/DoH3: <code>https://www.powerdns.com/powerdns-dnsdist</code></li>
+<li>dnsdist — политики балансировки, packet cache, метрики: <code>https://www.dnsdist.org/guides/serverselection.html</code>; <code>https://deepwiki.com/PowerDNS/pdns/3-dnsdist-load-balancer</code></li>
+<li>dnsdist — конфигурация Lua/YAML: <code>https://www.dnsdist.org/reference/config.html</code></li>
+<li><code>dnsext</code> (Haskell DNS-библиотека): <code>https://github.com/iijlab/dnsext</code>; Hackage: <code>https://hackage.haskell.org/package/dnsext-full-resolver</code></li>
+<li><code>ncdns</code> — мост Namecoin → DNS: <code>https://github.com/namecoin/ncdns</code></li>
+<li><code>ncdns</code> — практика RPC cookie-auth/loopback: <code>https://www.namecoin.org/docs/ncdns/</code></li>
+<li>EmerDNS — введение, встроенный DNS-сервер: <code>https://github.com/emercoin/docs/blob/master/en/020_Blockchain_Services/030_EmerDNS/030_EmerDNS_Introduction.md</code></li>
+<li>EmerDNS — зоны и NVS: там же (источник 9)</li>
+<li><code>hsd</code> — порты authoritative/recursive серверов: <code>https://github.com/handshake-org/hsd</code></li>
+<li><code>hnsd</code> — SPV-резолвер: <code>https://github.com/handshake-org/hnsd</code></li>
+<li><code>hsd</code> — RPC/REST API: документация <code>hsd-dev.org/api-docs</code> (упомянута в материалах по <code>hsd</code>, отдельно не фетчена)</li>
+<li><code>hsd</code> — middleware <code>ns.middle</code>, пример перенаправления в Namecoin: репозиторий <code>handshake-org/hsd</code> (источник 11)</li>
+<li>ENS — Registry/Resolver/ENSIP-10/CCIP-Read: официальная документация ENS (<code>docs.ens.domains</code>)</li>
+<li>ENS — шлюзы <code>eth.limo</code>/<code>eth.link</code>: материалы по ENS DNS-шлюзам</li>
+<li>cjdns/Hyperboria — история фрагментации DNS: <code>https://github.com/hyperboria/docs/blob/master/notes/dns.md</code>; <code>https://github.com/cjdelisle/cjdns/blob/master/doc/notes/dns.md</code></li>
+<li>Reticulum — <code>destination hash</code>: <code>https://reticulum.network/manual/understanding.html</code></li>
+<li>OLSR <code>nameservice</code>-плагин: <code>https://github.com/OLSR/olsrd/blob/master/lib/nameservice/README_NAMESERVICE</code></li>
+<li>ZeroNet ZeroName: <code>https://forum.namecoin.org/viewtopic.php?t=2340</code>; <code>https://zeronet.io/docs/faq/</code></li>
+<li>Переименование Freenet → Hyphanet (2023): <code>https://en.wikipedia.org/wiki/Hyphanet</code>; <code>https://news.ycombinator.com/item?id=36561663</code></li>
+<li>Hyphanet — типы ключей CHK/SSK/USK/KSK: там же (источник 21)</li>
+<li>GNS — RFC 9498: <code>https://www.ietf.org/archive/id/draft-schanzen-gns-20.html</code>; <code>https://lsd.gnunet.org/lsd0001/</code></li>
+<li>GNS — <code>.alt</code>/<code>.gns.alt</code> pTLD: <code>https://docs.gnunet.org/latest/users/gns.html</code></li>
+<li>GNS — DHT/NAMECACHE/NAMESTORE: <code>https://docs.gnunet.org/v0.20.x/developers/gns/gns.html</code></li>
+<li>DNS2GNS: <code>https://www.gnunet.org/en/gns.html</code></li>
+<li>dn42 — DNS/anycast-адреса: <code>https://wiki.dn42.us/services/DNS</code>; <code>https://wiki.dn42.us/services/dns/Configuration</code></li>
+<li>dn42 — whois/реестр, DNSSEC: <code>https://wiki.dn42.us/services/Whois</code></li>
+<li>anoNet — IPv4-блок, BGP поверх VPN: <code>https://en.wikipedia.org/wiki/AnoNet</code></li>
+<li>Calypso (DEDIS/EPFL, академическая система контроля доступа к приватным данным): <code>https://eprint.iacr.org/2018/209.pdf</code></li>
+<li>Calypso Network (платформа создания токенов): <code>https://calypso.network/</code></li>
+<li>Haskell-клиенты Prometheus: <code>https://hackage.haskell.org/package/prometheus</code>; <code>https://github.com/fimad/prometheus-haskell</code></li>
+</ol>
+<p><strong>Статус переданного пользователем фрагмента обсуждения</strong> (документы, добавленные в диалог текстом): содержат собственные ссылки на источники (RFC 2119 — <code>datatracker.ietf.org/doc/html/rfc2119</code>; Déjà Fu — <code>github.com/barrucadu/dejafu</code>; Hedgehog — <code>github.com/hedgehogqa/haskell-hedgehog</code>), независимо не перепроверенные построчно в рамках подготовки настоящего документа, но соответствующие общеизвестным, высоко достоверным фактам об этих проектах <code>[Вывод]</code>.</p>
+
+
+<!--claude-mermaid-runtime-begin:3477-->
+<style>.mermaid-diagram{margin-block:4px}.mermaid-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}</style>
+<script src="/_runtime/mermaid-11.16.1.min.js"></script>
+<script>(function(){
+var CFG={"palettes":{"light":{"surface":"#f4efe4","text":"#42392e","line":"#8a7f6d","border":"#7a6c52","bg":"#fffdf8"},"dark":{"surface":"#262b34","text":"#f2f3f5","line":"#a8adb8","border":"#9aa4b8","bg":"#1f232b"}}};
+if(typeof mermaid==='undefined')return;
+var pres=Array.prototype.slice.call(document.querySelectorAll('pre.mermaid')).filter(function(p){if(p.hasAttribute('data-claude-mermaid-claimed'))return false;p.setAttribute('data-claude-mermaid-claimed','1');return true;});
+if(!pres.length)return;
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+var root=document.documentElement;
+var items=pres.map(function(pre){
+var mount=document.createElement('div');mount.className='mermaid-diagram';
+return {pre:pre,mount:mount,src:pre.textContent||''};
+});
+var seq=0;
+var renderGen=0;
+var lastKey='';
+function pageBg(fallback){
+var els=[document.body,document.documentElement];
+for(var i=0;i<els.length;i++){
+var c=els[i]&&getComputedStyle(els[i]).backgroundColor;
+if(c&&c!=='transparent'&&c!=='rgba(0, 0, 0, 0)')return c;
+}
+return fallback;
+}
+function render(){
+var theme=root.getAttribute('data-theme');
+var dark=theme==='dark'||(!!(mq&&mq.matches)&&theme!=='light');
+var pal=dark?CFG.palettes.dark:CFG.palettes.light;
+var bg=pageBg(pal.bg);
+var key=(dark?'d':'l')+'|'+bg;
+if(key===lastKey)return;
+lastKey=key;
+var gen=++renderGen;
+var font=getComputedStyle(document.body).fontFamily||'sans-serif';
+var nat={useMaxWidth:false};
+mermaid.initialize({
+startOnLoad:false,securityLevel:'strict',theme:'base',
+flowchart:nat,sequence:nat,er:nat,state:nat,class:nat,pie:nat,
+gantt:nat,journey:nat,timeline:nat,gitGraph:nat,mindmap:nat,xyChart:nat,
+quadrantChart:nat,sankey:nat,c4:nat,requirement:nat,block:nat,
+packet:nat,kanban:nat,architecture:nat,radar:nat,
+themeVariables:{background:bg,mainBkg:pal.surface,primaryColor:pal.surface,
+primaryTextColor:pal.text,lineColor:pal.line,primaryBorderColor:pal.border,
+nodeBorder:pal.border,clusterBorder:pal.border,edgeLabelBackground:bg,
+clusterBkg:'rgba(127,127,127,0.07)',titleColor:pal.text,
+darkMode:dark,rowOdd:bg,rowEven:'rgba(127,127,127,0.07)',
+attributeBackgroundColorOdd:bg,attributeBackgroundColorEven:'rgba(127,127,127,0.07)',
+fontSize:'16px',fontFamily:font},
+themeCSS:'.node rect, .node circle, .node polygon, .node path, .cluster rect { stroke-width: 2px; }'
+});
+items.forEach(function(it){
+var id='claude-mermaid-'+seq++;
+mermaid.render(id,it.src).then(function(r){
+if(gen!==renderGen)return;
+var prev=it.pre.previousElementSibling;
+if(prev&&prev.className==='mermaid-diagram'&&prev!==it.mount)return;
+it.mount.innerHTML=r.svg;
+if(!it.mount.parentNode)it.pre.parentNode.insertBefore(it.mount,it.pre);
+it.pre.style.display='none';
+},function(){
+var scratch=document.getElementById(id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+scratch=document.getElementById('d'+id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+if(gen!==renderGen)return;
+if(it.mount.parentNode)it.mount.parentNode.removeChild(it.mount);
+it.pre.style.display='';
+});
+});
+}
+render();
+if(mq&&mq.addEventListener)mq.addEventListener('change',render);
+if(typeof MutationObserver!=='undefined')new MutationObserver(render).observe(root,{attributes:true,attributeFilter:['data-theme']});
+})();</script>
+<!--claude-mermaid-runtime-end-->
+</body></html>
