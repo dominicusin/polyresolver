@@ -62,7 +62,7 @@ polyresolver/
 
 ```bash
 # Clone and enter the project
-git clone https://github.com/nousresearch/polyresolver.git
+git clone https://github.com/dominicusin/polyresolver.git
 cd polyresolver
 
 # Build
